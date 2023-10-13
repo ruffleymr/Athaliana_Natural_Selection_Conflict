@@ -5666,7 +5666,7 @@ if(RERUN){
     scale_color_manual(values=c("#636363","#bdbdbd")) 
   saveRDS(fri_flc_plot, file="./figs/FT_dC13_withFLCFRImarked_mGWA_manhattanPlot_ggman.rda")
   
-  tmp1.gwas.sig <- tmp1[-log10(tmp1$p_score)>thresh,]
+  tmp1.gwas.sig <- tmp1[-log10(tmp1$P)>thresh,]
   
   which(-log10(tmp1$p_score)>thresh)
   tmp1[12010:12015]
@@ -5750,8 +5750,9 @@ if(RERUN){
   i<-56
   gene_list <- c()
   tmp1.gwas.sig[i,]
+  colnames(tmp1.gwas.sig) <- c("chr", "ps", "rs", "p_score")
   for (i in 1:nrow(tmp1.gwas.sig)) {
-    tmp <- gff %>% filter(V1==tmp1.gwas.sig$chr[i]) %>% 
+    tmp <- gff %>% filter(V1==paste0("Chr",tmp1.gwas.sig$chr[i])) %>% 
       filter(V4 < tmp1.gwas.sig$ps[i]) %>% 
       filter(V5 > tmp1.gwas.sig$ps[i])
     
@@ -5769,8 +5770,11 @@ if(RERUN){
   GO_annots <- read.table(file="./tables/FT_dC13_mGWAtopHits_GOAnnotationsAll.tsv", sep="\t", header = T)
   head(GO_annots)
   
-  GO_annots %>% filter(category=="proc")
-  curated_GO_annots_FT_dC13_mGWA <- GO_annots[,c(1,2, 4, 7, 9)] %>% filter(category=="proc")
+  GO_annots %>% filter(category=="proc" | category=="func")
+  
+  
+  
+  curated_GO_annots_FT_dC13_mGWA <- GO_annots[,c(1,2, 4, 7, 9)] %>% filter(category=="proc"| category=="func")
   saveRDS(curated_GO_annots_FT_dC13_mGWA, file="./figs/tmpobjects/curated_GO_annots_FT_dC13_mGWA.rda")
   
   ### ======================================================== ###
@@ -5818,8 +5822,8 @@ if(RERUN){
   GO_annots <- read.table(file="./tables/FT_dC13_pcs_mGWAtopHits_GOAnnotationsAll.tsv", sep="\t", header = T)
   head(GO_annots)
   
-  GO_annots %>% filter(category=="proc")
-  curated_GO_annots_FT_dC13_pcs_mGWA <- GO_annots[,c(1,2, 4, 7, 9,10)] %>% filter(category=="proc")
+  GO_annots %>% filter(category=="proc" | category=="func")
+  curated_GO_annots_FT_dC13_pcs_mGWA <- GO_annots[,c(1,2, 4, 7, 9,10)] %>% filter(category=="proc"| category=="func")
   saveRDS(curated_GO_annots_FT_dC13_pcs_mGWA, file="./figs/tmpobjects/curated_GO_annots_FT_dC13__pcs_mGWA.rda")
   
   
@@ -5865,7 +5869,7 @@ if(RERUN){
 }else{
   curated_GO_annots_FT_dC13_mGWA <- readRDS(file="./figs/tmpobjects/curated_GO_annots_FT_dC13_mGWA.rda")
   #write.table(curated_GO_annots_FT_dC13_mGWA, file="./tables/curated_GO_annots_FT_dC13_mGWA.tsv", sep="\t", col.names = T, row.names = F, quote = F)
-  knitr::kable(curated_GO_annots_FT_dC13_mGWA, caption = "Table SIII.2 Curated GO annotations for FT and dC13 multivariate GWA top hits.", fixed_thread=T)
+  knitr::kable(curated_GO_annots_FT_dC13_mGWA, caption = "Table S18 Curated GO annotations for FT and dC13 multivariate GWA top hits.", fixed_thread=T)
 }
 ```  
   
@@ -5876,7 +5880,7 @@ RERUN=F
 if(RERUN){
 }else{
   curated_GO_annots_FT_dC13_pcs_mGWA <-   readRDS(file="./figs/tmpobjects/curated_GO_annots_FT_dC13__pcs_mGWA.rda")
-  #write.table(curated_GO_annots_FT_dC13_pcs_mGWA, file="./tables/curated_GO_annots_FT_dC13_pcs_mGWA.tsv", sep="\t", col.names = T, row.names = F, quote = F)
+  write.table(curated_GO_annots_FT_dC13_pcs_mGWA, file="./tables/curated_GO_annots_FT_dC13_pcs_mGWA.tsv", sep="\t", col.names = T, row.names = F, quote = F)
   knitr::kable(curated_GO_annots_FT_dC13_pcs_mGWA, caption = "Table SIII.3 Curated GO annotations for FT and dC13 multivariate GWA using 5 genetic PCs top hits.", fixed_thread=T)
 }
 ```  
@@ -5932,7 +5936,7 @@ if(RERUN){
   head(GO_annots)
   
   GO_annots %>% filter(category=="proc")
-  curated_GO_annots_FT_dC13_imputed_mGWA <- GO_annots[,c(1,2, 4, 7, 9)] %>% filter(category=="proc")
+  curated_GO_annots_FT_dC13_imputed_mGWA <- GO_annots[,c(1,2, 4, 7, 9)] %>% filter(category=="proc" | category=="func")
   saveRDS(curated_GO_annots_FT_dC13_imputed_mGWA, file="./figs/tmpobjects/curated_GO_annots_FT_dC13_imputed_mGWA.rda")
   
   ### ======================================================== ###
@@ -6007,17 +6011,17 @@ if(RERUN){
   GO_annots <- read.table(file="./tables/FT_dC13_imp_pcs_GOAnnotationsAll.txt", sep="\t", header = T)
   head(GO_annots)
   
-  GO_annots %>% filter(category=="proc")
+  GO_annots %>% filter(category=="proc"| category=="func")
   head(GO_annots)
-  curated_GO_annots_FT_dC13_imp_pcs_mGWA <- GO_annots[,c(1,2, 4, 7, 9,10)] %>% filter(category=="proc")
-  head(curated_GO_annots_FT_dC13_imp_pcs_mGWA)
-  unique(curated_GO_annots_FT_dC13_imp_pcs_mGWA[,1])
-  lil_df <- GO_annots[,c(1, 4, 7)] %>% filter(category=="proc")
-  head(lil_df)
-  distinct(lil_df)
-  distinct(GO_annots[,c(1, 4)])
-  curated_GO_annots_FT_dC13_imp_pcs_mGWA <- distinct(GO_annots[,c(1, 4)])
-  
+  curated_GO_annots_FT_dC13_imp_pcs_mGWA <- GO_annots[,c(1,2, 4, 7, 9)] %>% filter(category=="proc" | category=="func")
+  # head(curated_GO_annots_FT_dC13_imp_pcs_mGWA)
+  # unique(curated_GO_annots_FT_dC13_imp_pcs_mGWA[,1])
+  # lil_df <- GO_annots[,c(1, 4, 7)] %>% filter(category=="proc")
+  # head(lil_df)
+  # distinct(lil_df)
+  # distinct(GO_annots[,c(1, 4)])
+  # curated_GO_annots_FT_dC13_imp_pcs_mGWA <- distinct(GO_annots[,c(1, 4)])
+  # 
   saveRDS(curated_GO_annots_FT_dC13_imp_pcs_mGWA, file="./figs/tmpobjects/curated_GO_annots_FT_dC13_imp_pcs_mGWA.rda")
   
   
@@ -6101,515 +6105,135 @@ if(RERUN){
 }
 ```  
 
-###### Zoom in on Peak
+###### Zoom in on Peak 2nd try
 
 ```{r, echo=F, eval=F, message=F, warning=F, fig.cap="", fig.width=8, fig.height=4, fig.cap="Figure SIII.12 Manhattan plot of multivariate GWA with flowering time and delta_C13 without genetic pcs."}
 RERUN=F
 if(RERUN){
-  
-  ## INSTALL
-  # install.packages(c("devtools","remotes"))
-  # #ggplot2, ggrepel, and reshape2 are installed from CRAN
-  # install.packages(c("ggplot2","ggrepel","reshape2"))
-  #   #SNPRelate and gdsfmt are installed from Bioconductor
-  # if (!requireNamespace("BiocManager", quietly = TRUE))
-  #    install.packages("BiocManager")
-  # BiocManager::install(c("SNPRelate","gdsfmt"))
-  
-  library(devtools)
-  library(remotes)
-  library(dplyr)
-  
-  install_github("whweve/IntAssoPlot")
-  library(IntAssoPlot)
-  
-  example("IntRegionalPlot")
-  example("IntGenicPlot")
-  
-  ## ASSOCIATION DATA
-  head(association)
-  tmp1<-data.table::fread(file="./multivarGWAS/mGWAS_FT16_Delta_13C/output/mGWAS_FT16_Delta_13C.assoc.txt") %>% select(rs, chr, ps, p_score) 
-  head(tmp1)
-  colnames(tmp1) <- colnames(association)
-  chromosome_association <- tmp1 %>% filter(Locus==1)
-  head(chromosome_association)
-  transcript_min <- 3874948-200000
-  transcript_max <- 3874948+200000
-  transcript_association <- chromosome_association[chromosome_association$Site >= 
-        transcript_min & chromosome_association$Site <= transcript_max, ]
-  transcript_association <- transcript_association[order(transcript_association$Site), ]
-  dim(transcript_association)
-  
-  ## GTF file
-  pvalue_range <- pretty(-log10(transcript_association$p))
-  fold <- ((transcript_max - transcript_min) * 2/3)/max(pvalue_range)
-  n_pvalue_range <- length(pvalue_range)
-  
-  head(gtf)
-  head(gff)
-  gene_list <- gff[gff$V1 == "Chr1" & grepl("exon",gff$V3,ignore.case = TRUE),]
-  gene_list$V9 <- gsub("\"|;", "", gene_list$V9)
-  gene_list$V9 <- sub("gene_id (\\S+) .+", "\\1", gene_list$V9)
-  gene_list_start <- aggregate(V4 ~ V9, data = gene_list, FUN = min)
-  gene_list_end <- aggregate(V5 ~ V9, data = gene_list, FUN = max)
-  gene_list$V4 <- NULL
-  gene_list$V5 <- NULL
-  gene_list <- merge(gene_list, gene_list_start, by = "V9")
-  gene_list <- merge(gene_list, gene_list_end, by = "V9")
-  gene_list <- gene_list[!duplicated(gene_list$V9), ]
-  gene_list <- gene_list[gene_list$V4 >= transcript_min & gene_list$V5 <= 
-      transcript_max, ]
-  gene_for <- gene_list[gene_list$V7 == "+", ]
-  gene_rev <- gene_list[gene_list$V7 == "-", ]
-  if (nrow(gene_for) >= 1) {
-            # plot forward strand gene
-            gene_for_seg <- list(geom_segment(data = gene_for, aes(x = V4, y = -(transcript_max - 
-                transcript_min)/30, xend = V5, yend = -(transcript_max - transcript_min)/30), 
-                arrow = arrow(length = unit(0.1, "cm"))))
-    } else {
-          gene_for_seg <- NULL
-    }
-   if (nrow(gene_rev) >= 1) {
-       # plot forward strand gene
-       gene_rev_seg <- list(geom_segment(data = gene_rev, aes(x = V5, y = -(transcript_max - 
-           transcript_min)/15, xend = V4, yend = -(transcript_max - transcript_min)/15), 
-           arrow = arrow(length = unit(0.1, "cm"))))
-   } else {
-       gene_rev_seg <- NULL
-   }
-   label_gene_name<- T
-   if (isTRUE(label_gene_name) & nrow(gene_for) >= 1) {
-       gene_for_seg_name <- list(geom_text_repel(data = gene_for, aes(x = V4, 
-           y = -(transcript_max - transcript_min)/25, label = V9), size = 1.5, 
-           angle = 25))
-   } else {
-       gene_for_seg_name <- NULL
-   }
-   
-   if (isTRUE(label_gene_name) & nrow(gene_rev) >= 1) {
-       gene_rev_seg_name <- list(geom_text_repel(data = gene_rev, aes(x = V4, 
-           y = -(transcript_max - transcript_min)/12, label = V9), size = 1.5, 
-           angle = 25))
-   } else {
-       gene_rev_seg_name <- NULL
-   }
-   if (any(nrow(gene_rev) >= 1, nrow(gene_for) >= 1)) {
-       gene_box <- list(geom_segment(aes(x = rep(transcript_min, 2), xend = rep(transcript_max, 
-           2), y = c(-(transcript_max - transcript_min)/12.5, -(transcript_max - 
-           transcript_min)/45), yend = c(-(transcript_max - transcript_min)/12.5, 
-           -(transcript_max - transcript_min)/45))), geom_segment(aes(x = c(transcript_min, 
-           transcript_max), xend = c(transcript_min, transcript_max), y = c(-(transcript_max - 
-           transcript_min)/12.5, -(transcript_max - transcript_min)/12.5), 
-           yend = c(-(transcript_max - transcript_min)/45, -(transcript_max - 
-             transcript_min)/45))), geom_segment(aes(x = c(transcript_min, 
-           transcript_max), xend = c(transcript_min, transcript_max), y = c(-(transcript_max - 
-           transcript_min)/12.5, -(transcript_max - transcript_min)/12.5), 
-           yend = c(-(transcript_max - transcript_min)/11.5, -(transcript_max - 
-             transcript_min)/11.5))), geom_text(aes(x = c(transcript_min, 
-           transcript_max), y = rep(-(transcript_max - transcript_min)/10.2, 
-           2)), label = c(transcript_min, transcript_max)))
-   } else {
-       gene_box <- list(NULL)
-   }
-   # decide whether to rotate x axis
-   scale_x <- list(scale_x_continuous(limits = c(transcript_min - (transcript_max - 
-       transcript_min)/6, transcript_max), breaks = seq(transcript_min, transcript_max, 
-       transcript_max - transcript_min)))
-   # label the yaxis
-   scale_y_line <- list(geom_segment(aes(x = transcript_min - (transcript_max - 
-       transcript_min)/30, y = min(pvalue_range), xend = transcript_min - 
-       (transcript_max - transcript_min)/30, yend = max(pvalue_range) * fold)))
-   scale_y_ticks <- list(geom_segment(aes(x = rep(transcript_min - (transcript_max - 
-       transcript_min)/15, n_pvalue_range), y = pvalue_range * fold, xend = rep(transcript_min - 
-       (transcript_max - transcript_min)/30, n_pvalue_range), yend = pvalue_range * 
-       fold)))
-   scale_y_text <- list(geom_text(aes(x = rep(transcript_min - (transcript_max - 
-       transcript_min)/12, n_pvalue_range), y = pvalue_range * fold, label = pvalue_range)))
-   # add threshold line
-   threshold <- thresh
-   if (is.null(threshold)) {
-       threshold_line <- list(NULL)
-   }
-   thresholdlinecolour<-"gray"
-   if (all(length(threshold) > 0, threshold <= max(pvalue_range))) {
-       threshold_line <- list(geom_segment(aes(x = transcript_min, xend = transcript_max, 
-           y = threshold * fold, yend = threshold * fold), linetype = "longdash", 
-           colour = thresholdlinecolour))
-   }
-   if (all(length(threshold) > 0, threshold > max(pvalue_range))) {
-       threshold_line <- list(NULL)
-       print("no -log10(p) pass the threshold, will not draw threshold line")
-   }
-   
-   
-   
-    # compute the LD, leadsnp or triangle
-        if (any(isTRUE(leadsnpLD), isTRUE(triangleLD)) & is.null(hapmap)) {
-            print("no hapmap data found, please provide the hapmap")
-            ld_leadsnp_colour <- list(NULL)
-            bottom_trianglLD = list(NULL)
-        }
-   leadsnpLD<-T
-   triangleLD<-T
-   head(hapmap2[,1:20])
-   hapmap2
-   
-  head(zmvpp1_hapmap[,1:20])
-  getwd()
-  vcf <- read.table(file="../1001g/vcf/515g.chr1.recode.vcf")
-  head(vcf[,1:20])
-   
-   
-        if (all(!isTRUE(leadsnpLD), !isTRUE(triangleLD), !is.null(hapmap))) {
-            ld_leadsnp_colour <- list(NULL)
-            bottom_trianglLD <- list(NULL)
-        }
-        # link association and LD for the significant loci link between LD and genic
-        # structure
-        if (any(isTRUE(leadsnpLD), isTRUE(triangleLD)) & !is.null(hapmap)) {
-            names(hapmap) <- sub("#", "", names(hapmap))
-            # gene_snp <- hapmap[hapmap$rs %in% transcript_association$Marker,]
-            gene_snp <- hapmap[hapmap$chrom == chr & hapmap$pos >= transcript_min & 
-                hapmap$pos <= transcript_max, ]
-            names(gene_snp) <- sub("#", "", names(gene_snp))
-            gene_snp <- gene_snp[!duplicated(gene_snp$rs), ]
-            # convert the SNP to numeric format
-            major_allele <- paste0(substr(gene_snp$allele, 1, 1), substr(gene_snp$allele, 
-                1, 1))
-            minor_allele <- paste0(substr(gene_snp$allele, 3, 3), substr(gene_snp$allele, 
-                3, 3))
-            heter_left <- paste0(substr(gene_snp$allele, 1, 1), substr(gene_snp$allele, 
-                3, 3))
-            heter_right <- paste0(substr(gene_snp$allele, 3, 3), substr(gene_snp$allele, 
-                1, 1))
-            # if allele equal to major allele, 0, else 2
-            for (j in 12:dim(gene_snp)[2]) {
-                gene_snp[gene_snp[, j] == major_allele, j] = 2
-                gene_snp[gene_snp[, j] == minor_allele, j] = 0
-                gene_snp[gene_snp[, j] == "NN", j] = NA
-                heter_position_left <- which(isTRUE(gene_snp[, j] == heter_left))
-                heter_position_right <- which(isTRUE(gene_snp[, j] == heter_right))
-                if (length(heter_position_left) > 1) {
-                  gene_snp[heter_position_left, j] = 1
-                }
-                if (length(heter_position_right) > 1) {
-                  gene_snp[heter_position_right, j] = 1
-                }
-            }
-            gene_snp2 <- gene_snp[, 12:dim(gene_snp)[2]]
-            gene_snp2 <- as.matrix(sapply(gene_snp2, as.numeric))
-            snpgdsCreateGeno("test.gds", genmat = gene_snp2, sample.id = names(gene_snp)[12:dim(gene_snp)[2]], 
-                snp.id = gene_snp$rs, snp.position = gene_snp$pos, snp.allele = gene_snp$alleles, 
-                snpfirstdim = TRUE)
-            genofile <- snpgdsOpen("test.gds")
-            if (ldstatistics == "rsquare") {
-                aa = snpgdsLDMat(genofile, slide = slide_length, method = "corr", 
-                  num.thread = threadN)
-            }
-            if (ldstatistics == "dprime") {
-                aa = snpgdsLDMat(genofile, slide = slide_length, method = "dprime", 
-                  num.thread = threadN)
-            }
-            snpgdsClose(genofile)
-            ld = aa$LD
-            if (ldstatistics == "rsquare") 
-                ld <- ld^2
-            names(ld) <- gene_snp$rs
-            ld <- melt(ld)
-            marker_info <- data.frame(index = 1:dim(gene_snp)[1], marker_name = gene_snp$rs)
-            ld$Var1 <- marker_info$marker[match(ld$Var1, marker_info$index)]
-            ld$Var2 <- marker_info$marker[match(ld$Var2, marker_info$index)]
-            if (ldstatistics == "rsquare") {
-                lengend_name = expression(italic(r)^2)
-            } else if (ldstatistics == "dprime") {
-                lengend_name = expression(D * {
-                  "'"
-                })
-            }
-            ld <- ld[!is.na(ld$value), ]
-            ld <- data.frame(Var1 = c(as.character(ld$Var1), as.character(ld$Var2)), 
-                Var2 = c(as.character(ld$Var2), as.character(ld$Var1)), value = rep(ld$value, 
-                  2), stringsAsFactors = FALSE)
-            marker_pos <- transcript_association[, c("Marker", "Site")]
-            ld$Site1 <- marker_pos$Site[match(ld$Var1, marker_pos$Marker)]
-            ld$Site2 <- marker_pos$Site[match(ld$Var2, marker_pos$Marker)]
-            # ld <- merge(ld,marker_pos,by.x='Var1',by.y = 'Marker') ld <-
-            # merge(ld,marker_pos,by.x='Var2',by.y = 'Marker') names(ld) =
-            # sub('Site.x','Site1',names(ld)) names(ld) = sub('Site.y','Site2',names(ld))
-            if (isTRUE(leadsnpLD)) {
-                if (!is.null(leadsnp)) {
-                  leadsnp <- leadsnp
-                }
-                if (is.null(leadsnp)) {
-                  leadsnp <- as.character(transcript_association[which.min(transcript_association$p), 
-                    "Marker"])
-                }
-                ld_leadsnp <- ld[ld$Var1 == leadsnp, ]
-                ld_leadsnp <- merge(ld_leadsnp, transcript_association, by.x = "Var2", 
-                  by.y = "Marker")
-                if (length(which(ld_leadsnp$Var1 == leadsnp & ld_leadsnp$Var2 == 
-                  leadsnp)) >= 1) {
-                  ld_leadsnp <- ld_leadsnp[!(ld_leadsnp$Var1 == leadsnp & ld_leadsnp$Var2 == 
-                    leadsnp), ]
-                }
-                ld_leadsnp$R2 <- 0.2 * (ld_leadsnp$value%/%0.2 + as.logical(ld_leadsnp$value%/%0.2))
-                ld_leadsnp$R2 <- as.character(ld_leadsnp$R2)
-                ld_leadsnp$R2[ld_leadsnp$R2 == "0"] = "0.2"
-                ld_leadsnp$R2[ld_leadsnp$R2 == "1.2"] = "1"
-                ld_leadsnp_colour <- list(geom_point(data = ld_leadsnp, aes(Site2, 
-                  -log10(p) * fold, fill = R2), shape = 21,colour = "black",size=upperpointsize),
-                  scale_fill_manual(values = c(`0.2` = colour02, `0.4` = colour04, 
-                    `0.6` = colour06, `0.8` = colour08, `1` = colour10), labels = c("0-0.2", 
-                    "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1.0"), name = lengend_name))
-            }
-            if (!isTRUE(leadsnpLD)) {
-                ld_leadsnp_colour <- list(NULL)
-            }
-            if (is.null(hapmap_ld)) {
-                hapmap_ld = hapmap
-            }
-            hapmap_ld <- hapmap_ld[hapmap_ld$chrom == chr & hapmap_ld$pos >= transcript_min & 
-                hapmap_ld$pos <= transcript_max, ]
-            marker_number = dim(hapmap_ld)[1]
-            length = (transcript_max - transcript_min)
-            distance = 0.5 * length/(marker_number - 1)
-            if (isTRUE(triangleLD)) {
-                names(hapmap_ld) <- sub("#", "", names(hapmap_ld))
-                gene_snp <- hapmap_ld
-                gene_snp <- gene_snp[order(gene_snp$chrom, gene_snp$pos), ]
-                names(gene_snp) <- sub("#", "", names(gene_snp))
-                gene_snp <- gene_snp[!duplicated(gene_snp$rs), ]
-                # convert the SNP to numeric format
-                major_allele <- paste0(substr(gene_snp$allele, 1, 1), substr(gene_snp$allele, 
-                  1, 1))
-                minor_allele <- paste0(substr(gene_snp$allele, 3, 3), substr(gene_snp$allele, 
-                  3, 3))
-                heter_left <- paste0(substr(gene_snp$allele, 1, 1), substr(gene_snp$allele, 
-                  3, 3))
-                heter_right <- paste0(substr(gene_snp$allele, 3, 3), substr(gene_snp$allele, 
-                  1, 1))
-                # if allele equal to major allele, 0, else 2
-                for (j in 12:dim(gene_snp)[2]) {
-                  gene_snp[gene_snp[, j] == major_allele, j] = 2
-                  gene_snp[gene_snp[, j] == minor_allele, j] = 0
-                  gene_snp[gene_snp[, j] == "NN", j] = NA
-                  heter_position_left <- which(isTRUE(gene_snp[, j] == heter_left))
-                  heter_position_right <- which(isTRUE(gene_snp[, j] == heter_right))
-                  if (length(heter_position_left) > 1) {
-                    gene_snp[heter_position_left, j] = 1
-                  }
-                  if (length(heter_position_right) > 1) {
-                    gene_snp[heter_position_right, j] = 1
-                  }
-                }
-                gene_snp2 <- gene_snp[, 12:dim(gene_snp)[2]]
-                gene_snp2 <- as.matrix(sapply(gene_snp2, as.numeric))
-                snpgdsCreateGeno("test.gds", genmat = gene_snp2, sample.id = names(gene_snp)[12:dim(gene_snp)[2]], 
-                  snp.id = gene_snp$rs, snp.position = gene_snp$pos, snp.allele = gene_snp$alleles, 
-                  snpfirstdim = TRUE)
-                genofile <- snpgdsOpen("test.gds")
-                if (ldstatistics == "rsquare") {
-                  aa = snpgdsLDMat(genofile, slide = slide_length, method = "corr", 
-                    num.thread = threadN)
-                }
-                if (ldstatistics == "dprime") {
-                  aa = snpgdsLDMat(genofile, slide = slide_length, method = "dprime", 
-                    num.thread = threadN)
-                }
-                snpgdsClose(genofile)
-                ld = aa$LD
-                if (ldstatistics == "rsquare") 
-                  ld <- ld^2
-                names(ld) <- gene_snp$rs
-                ld <- melt(ld)
-                marker_info <- data.frame(index = 1:dim(gene_snp)[1], marker_name = gene_snp$rs)
-                ld$Var1 <- marker_info$marker[match(ld$Var1, marker_info$index)]
-                ld$Var2 <- marker_info$marker[match(ld$Var2, marker_info$index)]
-                if (ldstatistics == "rsquare") {
-                  lengend_name = expression(italic(r)^2)
-                } else if (ldstatistics == "dprime") {
-                  lengend_name = expression(D * {
-                    "'"
-                  })
-                }
-                ld <- ld[!is.na(ld$value), ]
-                ld <- data.frame(Var1 = c(as.character(ld$Var1), as.character(ld$Var2)), 
-                  Var2 = c(as.character(ld$Var2), as.character(ld$Var1)), value = rep(ld$value, 
-                    2), stringsAsFactors = FALSE)
-                # marker_pos <- hapmap_ld[, c('rs', 'pos')] ld$Site1 <-
-                # marker_pos$pos[match(ld$Var1, marker_pos$rs)] ld$Site2 <-
-                # marker_pos$pos[match(ld$Var2, marker_pos$rs)] ld <-
-                # merge(ld,marker_pos,by.x='Var1',by.y = 'rs') ld <-
-                # merge(ld,marker_pos,by.x='Var2',by.y = 'rs') names(ld) =
-                # sub('pos.x','Site1',names(ld)) names(ld) = sub('pos.y','Site2',names(ld))
-                # compute the LD position, the sequence ranged from small to big marker_pair =
-                # NULL center_x = NULL center_y = NULL
-                locib <- rep(1:(marker_number - 1), (marker_number - 1):1)
-                locia <- sequence((marker_number - 1):1)
-                marker_pair <- 1:length(locia)
-                center_x <- distance * (locia + locia + locib - 2)
-                center_y <- -locib * distance
-                upper_center_x <- center_x
-                upper_center_y <- center_y + distance
-                lower_center_x <- center_x
-                lower_center_y <- center_y - distance
-                left_center_x <- center_x - distance
-                left_center_y <- center_y
-                right_center_x <- center_x + distance
-                right_center_y <- center_y
-                poly_data <- data.frame(group = rep(marker_pair, 4), x = c(upper_center_x, 
-                  right_center_x, lower_center_x, left_center_x) + transcript_min, 
-                  y = c(upper_center_y, right_center_y, lower_center_y, left_center_y) - 
-                    4 * max(pvalue_range) * fold/30, label = rep(c(1, 2, 3, 4), 
-                    each = length(upper_center_x)), stringsAsFactors = FALSE)
-                # L <- NULL L$x <- c(upper_center_x,right_center_x, lower_center_x,
-                # left_center_x) + transcript_min L$y <- c(upper_center_y, right_center_y,
-                # lower_center_y, left_center_y) - 4 * max(pvalue_range) * fold/30 L$label <-
-                # rep(c(1, 2, 3, 4),each = length(upper_center_x)) L$marker1 <- rep(locia,4)
-                # L$marker2 <- rep(locia+locib,4) L$group <- paste0(L$marker1,'_',L$marker2) n
-                # <- length(L[[1]]) poly_data <- structure(L, row.names = c(NA, -n), class =
-                # 'data.frame')
-                poly_data$marker1 <- rep(locia, 4)
-                poly_data$marker2 <- rep(locia + locib, 4)
-                # transcript_association <-
-                # transcript_association[order(transcript_association$Site),]
-                # transcript_association$marker_number <- 1:dim(transcript_association)[1]
-                # marker_index <- transcript_association[,c('Marker','marker_number')]
-                hapmap_ld <- hapmap_ld[order(hapmap_ld$pos), ]
-                hapmap_ld$marker_number <- 1:dim(hapmap_ld)[1]
-                marker_index <- hapmap_ld[, c("rs", "marker_number")]
-                poly_data$Var1 <- marker_index$rs[match(poly_data$marker1, marker_index$marker_number)]
-                poly_data$Var2 <- marker_index$rs[match(poly_data$marker2, marker_index$marker_number)]
-                # poly_data <- merge(poly_data,marker_index,by.x='marker1',by.y =
-                # 'marker_number') poly_data <-
-                # merge(poly_data,marker_index,by.x='marker2',by.y = 'marker_number')
-                # names(poly_data) = sub('rs.x','Var1',names(poly_data)) names(poly_data) =
-                # sub('rs.y','Var2',names(poly_data))
-                poly_data$value <- ld$value[match(paste0(poly_data$Var1, "/", poly_data$Var2), 
-                  paste0(ld$Var1, "/", ld$Var2))]
-                # poly_data$Site1 <- ld$Site1[match(paste0(poly_data$Var1, '/',
-                # poly_data$Var2), paste0(ld$Var1, '/', ld$Var2))] poly_data$Site2 <-
-                # ld$Site2[match(paste0(poly_data$Var1, '/', poly_data$Var2), paste0(ld$Var1,
-                # '/', ld$Var2))] poly_data <- poly_data[poly_data$Var1 != leadsnp &
-                # poly_data$Var2 != leadsnp,] poly_data <-
-                # merge(poly_data,ld,by.x=c('Var1','Var2'),by.y = c('Var1','Var2'))
-                poly_data$R2 <- 0.2 * (poly_data$value%/%0.2 + as.logical(poly_data$value%/%0.2))
-                poly_data$R2 <- as.character(poly_data$R2)
-                poly_data$R2[poly_data$R2 == "0"] = "0.2"
-                poly_data$R2[poly_data$R2 == "1.2"] = "1"
-                # poly_data <- poly_data[order(poly_data$group, poly_data$label),]
-                if (!isTRUE(leadsnpLD)) {
-                  bottom_trianglLD = list(geom_polygon(data = poly_data, aes(group = group, 
-                    x = x, y = y - (transcript_max - transcript_min)/50, fill = R2)), 
-                    scale_fill_manual(values = c(`0.2` = colour02, `0.4` = colour04, 
-                      `0.6` = colour06, `0.8` = colour08, `1` = colour10), labels = c("0-0.2", 
-                      "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1.0"), name = lengend_name))
-                }
-                if (isTRUE(leadsnpLD)) {
-                  bottom_trianglLD = list(geom_polygon(data = poly_data, aes(group = group, 
-                    x = x, y = y - (transcript_max - transcript_min)/50, fill = R2)))
-                }
-            }
-            if (!isTRUE(triangleLD)) {
-                bottom_trianglLD <- list(NULL)
-            }
-        }
-   
-        
-        
-        
-        
-  
-  
-  
-  
-  
-  ## get GTF file 
-   head(gtf)
-#   gff <- read.table(file="../arabidopsisthaliana_reference/TAIR10_GFF3_genes_transposons.gff")
-#   head(gff)
-  library(rtracklayer)
-# 
-# test_path <- system.file("tests", package = "rtracklayer")
-# test_gff3 <- file.path(test_path, "genes.gff3")
-# test <- import("../arabidopsisthaliana_reference/TAIR10_GFF3_genes_transposons.gff")
-# export(test,"../natvar/data/TAIR10_GFF3_genes_transposons.gtf","gtf")
-  at_gtf <- rtracklayer::import("../natvar/data/TAIR10_GFF3_genes_transposons.gtf")
-  head(at_gtf)
-  
-  
-  
-  
-  ## hapmap file?
-  head(zmvpp1_hapmap[,1:20])
-  getwd()
-  vcf <- read.table(file="../1001g/vcf/515g.chr1.recode.vcf")
-  head(vcf[,1:20])
-  
-  IntRegionalPlot(chr=9,left=94178074-200000,right=94178074+200000,gtf=gtf,association=association,hapmap=hapmap_am368,hapmap_ld=hapmap_am368,threshold=5,leadsnp_size=2)
 
-   IntRegionalPlot(chr=1,left=3874948-200000,right=3874948+200000,gtf=at_gtf,association=tmp1,hapmap=vcf,hapmap_ld=vcf,threshold=thresh,leadsnp_size=2)
+  library(data.table)
+  library(dplyr)
+  #install.packages("topr")
+  #library(topr)
+  library(gridExtra)
+  library(grid)
+  library(ggplot2)
+  library(cowplot)
   
-  
-  
-  # install_github("drveera/ggman")
-  library(ggman)
-  setwd("~/safedata/natvar/")
-  
-  ### ======================================================== ###
-  ## multivariate gwa
-  ### ======================================================== ###
-  tmp1<-data.table::fread(file="./multivarGWAS/mGWAS_FT16_Delta_13C/output/mGWAS_FT16_Delta_13C.assoc.txt") %>% select(chr,ps, rs, af, beta_1, beta_2, p_score) 
+  tmp1<-data.table::fread(file="./multivarGWAS/mGWAS_FT16_Delta_13C/output/mGWAS_FT16_Delta_13C.assoc.txt") %>%  dplyr::select(chr, ps, rs, p_score)
   head(tmp1)
+  colnames(tmp1) <- c("CHROM", "POS", "ID", "P")
   
+  data <- tmp1  
+  data$logp <- -log10(data$P)
+  thresh <- -log10(0.05/nrow(tmp1))
+  data %>% filter(logp >thresh) %>% filter(CHROM==1) 
+  
+
+center <- 3876090
+zoomGWAplot <- function(data, center, start, stop){
+  
+  data$logp <- -log10(data$P)
   thresh <- -log10(0.05/nrow(tmp1))
   
-  ## colored plots, how to change colors??
-  p1 <- ggman(tmp1, snp = "rs", bp = "ps", chrom = "chr", pvalue = "p_score", relative.positions = T, sigLine = thresh, title="") +  
-    scale_color_manual(values=c("#54278f","#e6550d")) 
+  zoomplot <- ggplot(data) + geom_point(aes(y=logp, x=POS)) +
+    xlim(center-6000, center+3000) + ylim(6, 9) +
+    geom_hline(yintercept=thresh, linetype="dashed", 
+                color = "red", size=1)
+  
+  
+  
+}
+  
+  ## what are the genes
+  gff <- read.table(file="../arabidopsisthaliana_reference/TAIR10_GFF3_genes_transposons.gff")
+  head(gff)
+  
+  gff_gene <- gff %>% dplyr::filter(V3=="exon") %>% dplyr::filter(V1=="Chr1")
+  head(gff_gene)
+  
+  thresh <- -log10(0.05/nrow(tmp1))
+  peak <- data %>% filter(logp >thresh) %>% filter(CHROM==1)
+  peak<- peak[-c(1,2),]
+  
+  min(peak$POS)
+  genes <- c()
+  i<- 1
+  for (i in 1:length(peak$POS)){
     
-  tmp1$log10 <- -log10(tmp1$p_score)
-  tmp1 %>% filter(log10 >thresh) %>% filter(chr==1) 
-  
-  
-  grep("3876764", tmp1$ps)
-  tmp1$rs[18450:18470]
-  
-  p1
-  ggmanZoom(p1, start.position = 3869637, end.position = 3878812, chromosome = 1)
-  
-  ## LD plot
     
-  tmp1.gwas.sig <- tmp1[-log10(tmp1$p_score)>thresh,]
+   gene <- gff_gene[p.eak$POS[i] > gff_gene$V4 & peak$POS[i] < gff_gene$V5, ]
+   print(gene)
+  }
   
-  which(-log10(tmp1$p_score)>thresh)
-  tmp1[12010:12015]
+  AT1G11500.1
+  AT1G11510.1
+  AT1G11520.1
+  AT1G11530.1
+  AT1G11540.1
   
-   chrm1_peakhits<- tmp1.gwas.sig %>% filter(chr==1)
-  write.table(chrm1_peakhits[6:25,]$rs, file="~/safedata/natvar/multivarGWAS/mGWAS_FT16_Delta_13C/peak1snps.txt", col.names = F, row.names = F, quote = F)
+  gff_gene <- gff %>% dplyr::filter(V3=="gene") %>% dplyr::filter(V1=="Chr1")
+  head(gff_gene)
+  gff_gene %>%filter(V9=="Parent=AT1G11510.1")
   
-  ## in plink
-  ## ~/plink-1.07-x86_64/plink --bfile 1001gbi --from rs2745383 --to rs 7021124 --make-bed --out peakchr1
-  chrm1_peakhits$log10 <- -log10(chrm1_peakhits$p_score)
+  gff_gene[1180,]
   
-  chrm1_peakhits[3:25]
+  segs <- matrix(NA,5, 2)
+  segs[1,1 ]<- gff_gene[1176,"V4"]
+  segs[1,2 ]<- gff_gene[1176,"V5"]
   
-  ggplot(data=chrm1_peakhits[6:25,]) +  geom_point(aes(x= ps, y=log10))
-  chrm1_peakhits <- chrm1_peakhits[6:25,]
+  segs[2,1 ]<- gff_gene[1177,"V4"]
+  segs[2,2 ]<- gff_gene[1177,"V5"]
+  
+   segs[3,1 ]<- gff_gene[1178,"V4"]
+  segs[3,2 ]<- gff_gene[1178,"V5"]
+  
+  segs[4,1 ]<- gff_gene[1179,"V4"]
+  segs[4,2 ]<- gff_gene[1179,"V5"]
+  
+  segs[5,1 ]<- gff_gene[1180,"V4"]
+  segs[5,2 ]<- gff_gene[1180,"V5"]
   
   
-  ### LD data for peak
-  ld_mat <- fread(file="~/safedata/1001g/ld/r2.ld")
   
-  ld_mat[1:5,]
+  geneannotPlt <- ggplot(data) + geom_point(aes(y=logp, x=POS), col="white") +
+    xlim(center-6000, center+3000) + ylim(7.4, 8.1) +
+    ylab("") +
+    geom_segment(aes(x=segs[1,1],xend=segs[1,2],y=8,yend=8)) +
+    geom_segment(aes(x=segs[2,1],xend=segs[2,2],y=7.8,yend=7.8)) +
+    geom_segment(aes(x=segs[3,1],xend=segs[3,2],y=7.6,yend=7.6)) +
+    geom_segment(aes(x=segs[4,1],xend=segs[4,2],y=7.5,yend=7.5)) +
+    geom_segment(aes(x=segs[5,1],xend=segs[5,2],y=8.0,yend=8.0)) 
+
+  
+  pdf("./figs/zoomPeak1_geneannot.pdf", height = 8, width=4 )
+  plot_grid(zoomplot, geneannotPlt, nrow = 2, ncol=1 )
+  dev.off()
+  
+  top_hits<- readRDS(file="data/mGWA_FT&dC13_andLFitnessGWA_top05hits.rda")
+  chr1peakhits <- top_hits %>%  filter(chr.x==1)
+  ## LD heatplot
+  setwd("~/safedata/natvar/")
+  ld_mat <- fread(file="../1001g/ld/r2.ld")
+  
+  ld_mat[1:5,1:5]
+
+  chr1peakhits[97:130,]
+  
+  ld_mat$SNP_A[17936898:18011855]
+  ld_prunedmat <- ld_mat[17936898:18011855, ]
+  ld_prunedmat <- ld_prunedmat[ld_prunedmat$SNP_B %in% chr1peakhits$rs , ]
+  ld_prunedmat
+  
+  which(ld_mat$SNP_A == "1_3870913") ## first snp
+  which(ld_mat$SNP_A == "1_3876764")
   
   chrm1_peakhits$rs %in% ld_mat$SNP_A
   
-  ld_mat_prune <- ld_mat[ld_mat$SNP_A %in% chrm1_peakhits$rs , ]
-    ld_mat_prune <- ld_mat[ld_mat$SNP_A %in% chrm1_peakhits$rs & ld_mat$SNP_B %in% chrm1_peakhits$rs , ]
+  ld_mat_prune <- ld_mat[ld_mat$SNP_A %in% chr1peakhits$rs , ]
   
-    
-    
+  ld_mat_prune <- ld_mat[ld_mat$SNP_A %in% chr1peakhits$rs & ld_mat$SNP_B %in% chr1peakhits$rs , ]
+  
     sum(ld_mat$SNP_B %in% chrm1_peakhits$rs)
     
   ld_melt <- data.frame(A=ld_mat_prune$SNP_A, B=ld_mat_prune$SNP_B, r2=ld_mat_prune$R2)
@@ -6620,14 +6244,48 @@ if(RERUN){
   LD_peak1 <- cast(ld_melt, A~B)
   LD_peak1
   saveRDS(LD_peak1, file="./data/LD_peak1.rda")
+  LD_peak1 <- readRDS(file="./data/LD_peak1.rda")
+  LD_peak1[1:5, 1:5]
+  
+  
+ LD_peak1[is.na(LD_peak1)] <- 0.0
+  library(corrplot)
+ LD_peak1 <- data.frame(LD_peak1)
+ 
+ rownames(LD_peak1) <- LD_peak1[,1]
+ LD_peak1 <- LD_peak1[,-1]
+ class(LD_peak1)
+ 
+ pdf(file="./figs/LDcorplotPeakchr1.pdf", height = 4, width = 4)
+  corrplot(as.matrix(LD_peak1), 
+         type="upper", 
+         order="original", 
+         method="square",
+         tl.cex = 0.5,
+         col=COL1(sequential = c("YlOrRd"), n = 100),
+          
+)
+  dev.off()
+  
+  dim(LD_peak1)
+  corrplot(as.matrix(LD_peak1), method = 'color', is.corr = F)
+  
+  ggplot(df_long, aes(x = Var1, y = Var2, fill = r)) +
+  geom_raster() +
+  geom_text(aes(label = label)) +
+  scale_fill_distiller(palette = "Spectral") +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
   
   
   
   
-}else{
+  ## example from topr, but unfortunately only for human gene annotations
+  head(CD_UKBB)
   
-}  
-  
+  regionplot(CD_UKBB, gene="IL23R")
+  locuszoom(R2_CD_UKBB)
+}
 ```
 
 
