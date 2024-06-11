@@ -3,8 +3,7 @@ title: |
   | Genomic conflicts of natural selection for ecologically-relevant traits
   | Supplemental Appendix
 author: |
-  | **Megan Ruffley, Laura Leventhal, Shannon Hateley, Will Viana, Yoav Voichek?,**
-  | **Detlef Weigel?,  Clara, and Arapheno team, 
+  | **Megan Ruffley, Laura Leventhal, Shannon Hateley, 
   | Sue Rhee , Moises Exposito-Alonso**
   | 1 Department of Plant Biology, Carnegie Institution for Science, California, USA
   | 2 Department of Biology, Stanford University, California, USA
@@ -26,9 +25,10 @@ editor_options:
   #   toc: yes
   #   toc_depth: 2
 
-mypath <- "~/safedata/natvar"    ##the .rmd is in natvar/analyses/ 
-knitr::opts_knit$set(root.dir = mypath, warning=FALSE, errors=FALSE)
-setwd("./safedata/natvar/")
+# mypath <- "~/safedata/natvar"    ##the .rmd is in natvar/analyses/ 
+# knitr::opts_knit$set(root.dir = mypath, warning=FALSE, errors=FALSE)
+# setwd("./safedata/natvar/")
+setwd("/natvar/")
 #devtools::install(".")
 #devtools::load_all("~/safedata/natvar") # natvar
 #install.packages("ggplot2", dependencies = T, lib="/home/mruffley/R/x86_64-pc-linux-gnu-library/3.6")
@@ -41,12 +41,12 @@ library(dplyr)
 library(ggplot2)
 #library(moiR)
 library(data.table)
-library(corrplot)
+#library(corrplot)
 library(cowplot)
 library(caret)
-library(ggfortify)
+#library(ggfortify)
 theme_set(theme_cowplot())
-#install.packages("tinytex")
+#install.packages("caret", dependencies=T)
 #remove.packages("ggplot2")
 #source("~/safedata/natvar/analysesphenotypeselection/R/phenoselection_multi_FUNCTIONS.R")
 ```
@@ -65,8 +65,11 @@ theme_set(theme_cowplot())
 The phenotypes come from a combination of laboratory and field experiments that use a subset of the 1001 genomes A. thaliana ecotypes Nearly 600 phenotypes come from the Arapheno database (Seren et al. 2017), but the remainder are not included in the public database. We also rely heavily on fitness data from 8 outdoor field experiments where fitness was measured under high and low rainfall environments (Exposito-Alonso et al. 2019). In total, data from 1862 phenotypes were gathered from over 108 published sources (Table SI.1). In the case of replicated ecotypes within an experiment with multiple measures for the same phenotype, we took the mean of the replicates.
 
 ```{r, echo=FALSE, eval=F}
-d<-read.table("./data/pheno_fromgoogle.tsv",header = T)
-d <- d[,-3]
+#d<-read.table("./data/pheno_fromgoogle.tsv",header = T)
+d <- read.table(file="./data/atlas_dir.tsv", header = T, sep="\t")
+d <- d[,-4]
+
+
 #write.table(d, "./tables/Allphenotype_Info_tableSI1.tsv", col.names = T, row.names = F, quote = F, sep="\t")
 knitr::kable(d, col.names = colnames(d), caption = "Table SI.1 Phenotypes gathered for this study with the original publication, general name of the phenotype, number of 1001 genomes accessions used in the original study, general function category, and stress strategy classification.")
 ```
@@ -77,7 +80,7 @@ We assembled the phenotype data for the 1001 genomes individuals of _Arabidopsis
 ```{r, echo=F, eval=T, fig.cap="Figure SI.1 Phenotypic coverage across 1001 Genomes A. thaliana Accessions", fig.height=2.5, fig.width=6}
 RERUN=F 
 if(RERUN){
-  pheno<- read.table(file="./data/atlas1001_phenotypes_matrix.csv", sep=",", header = T)
+  pheno<- read.table(file="./data/atlas1001_phenotypes_matrix_MR.csv", sep=",", header = T)
   dim(pheno)
   id<-pheno[,1]
   pheno<- pheno[,-1]
@@ -96,6 +99,13 @@ if(RERUN){
 
   save(file = "./figs/tmpobjects/phenotype_missingness.rda",phenotype_missingness)
   
+  
+  pdf(file="./figs/missingdatasummary.pdf", height=3, width = 3)
+  qplot(phenomiss, xlab="% of accessions",ylab="# phenotypes",bins=25)+
+      scale_x_continuous(breaks = seq(0,1,by=0.25),labels =seq(0,1,by=0.25)*100 )
+  dev.off()
+  
+  
   phenotype_missingness
 }else{
   load("./figs/tmpobjects/phenotype_missingness.rda")
@@ -110,6 +120,7 @@ We classified all phenotypes into a general functional category (__Fig. SI.2A__)
 ## chunk working, tested 9/20
 RERUN=F
 if(RERUN){
+  library(future)
   d<-read.table("./data/pheno_fromgoogle.tsv",header = T)
   d1<-table(d$phenotypecategory) %>% as.data.frame()
   d2<-table(d$stressstrategy) %>% as.data.frame()
@@ -123,16 +134,16 @@ if(RERUN){
   # d_es <- d %>% filter(stressstrategy=="Avoidance")
   # summary(d_es$numaccessions)
   
-  p1<-ggplot(d1) + geom_col(aes(x = Var1, y=Freq, fill=Var1 ), color='white') + xlab("") + ylab("# phenotypes")+
+  p1<-ggplot(d1) + geom_col(aes(x = Var1, y=Freq, fill=Var1 ), color='white', alpha=0.5) + xlab("") + ylab("# phenotypes")+
     theme(axis.text.x = element_text(angle = 45,hjust = 1)) +
-    scale_fill_manual("",values = c("Defense"=transparent("red3"),"Development"=transparent('darkorange1'), 
-                                    "Ionomics"=transparent("goldenrod1"), 
-                                    "Metabolite"=transparent("yellow"), "Microbiome"=transparent("limegreen"), 
-                                    "Reproduction"=transparent("dodgerblue1" ))) +
+    scale_fill_manual("",values = c("Defense"=alpha("red3"),"Development"=alpha('darkorange1'), 
+                                    "Ionomics"=alpha("goldenrod1"), 
+                                    "Metabolite"=alpha("yellow"), "Microbiome"=alpha("limegreen"), 
+                                    "Reproduction"=alpha("dodgerblue1" ))) +
     theme(legend.position = c(.7, .7), legend.key.size =unit(.5, 'cm'), 
     legend.text = element_text(size=5), legend.title = element_blank()) 
-  p2<-ggplot(d2) + geom_col(aes(x = Var1, y=Freq ,fill=Var1),color='white',) + xlab("") +
-    scale_fill_manual("",values = c("Avoidance"=transparent("red"),"Escape"=transparent('green4'), "Tolerance"=transparent("navy")))+    
+  p2<-ggplot(d2) + geom_col(aes(x = Var1, y=Freq ,fill=Var1),color='white', alpha=0.5) + xlab("") +
+    scale_fill_manual("",values = c("Avoidance"=alpha("red"),"Escape"=alpha('green4'), "Tolerance"=alpha("navy")))+    
     ylab("") + 
     theme(axis.text.x = element_text(angle = 45,hjust = 1)) +
     #theme(plot.margin=margin(l=-0.5,unit="cm")) +
@@ -141,7 +152,10 @@ if(RERUN){
 
   PhenoCatStrat_Histograms<-plot_grid(p1,p2,nrow=1 ,rel_widths = c(1.6,1),align = "hv")
   save(file = "./figs/tmpobjects/PhenoCatStrat_Histograms.rda",PhenoCatStrat_Histograms)
+  
+  pdf(file="./figs/PhenoCatStrat_Histograms.pdf", width = 5, height=3.5)
   PhenoCatStrat_Histograms
+  dev.off()
 }else{
   load("./figs/tmpobjects/PhenoCatStrat_Histograms.rda")
   PhenoCatStrat_Histograms
@@ -155,39 +169,111 @@ We used the R package *missForest* to do a full dataset imputation (Stekhoven an
 ```{r, echo=F, eval=T, fig.cap="Figure SI.3 Normalized root-MSE for all phenotypes.", fig.width=3, fig.height=2.5, warning=F}
 RERUN=F 
 if(RERUN){
+  #getwd()
+  #setwd("./safedata/natvar")
   library(missForest)
   library(stats)
   pheno<- read.table(file="./data/atlas1001_phenotypes_matrix.csv", sep=",", header = T)
   pheno[pheno== -9]<-NA   ## turn -9 into NA 
   #sum(pheno== -9, na.rm = T)  ##check
-  dimp<- missForest(pheno[,-1], variablewise=T) #has lower NRMSE at 0.2098436 on June 8 2021
-  atlas1001_phenotype_matrix_imputed_onlypheno_NEW=data.frame(pheno$V1,dimp$ximp)
-  names(atlas1001_phenotype_matrix_imputed_onlypheno_NEW)[1]<-"id"
+  dimp<- missForest(pheno[,-1], variablewise=T,maxiter = 5)
+  #has lower NRMSE at 0.2098436 on June 8 2021
+  atlas1001_phenotype_matrix_imputed_withID=data.frame(pheno$V1,dimp$ximp)
+  names(atlas1001_phenotype_matrix_imputed_withID)[1]<-"id"
   error <- data.frame(pheno=colnames(pheno[,-1]), MSE=dimp$OOBerror) 
   NRMSE_list<-c()
+  varExp_list <- c()
   for (i in 1:ncol(pheno)-1){
-    n<- sqrt(error[i,2]) / (max(pheno[,i+1], na.rm=T) - min(pheno[,i+1], na.rm=T))
+    n <- sqrt(error[i,2]) / (max(pheno[,i+1], na.rm=T) - min(pheno[,i+1], na.rm=T))
     NRMSE_list <- c(NRMSE_list, n)
   }
-  mean(NRMSE_list[-which(is.na(NRMSE_list)) ]) ## yayyyyyy this one reports as 0.1909089, which is better than the other one
+  mean(NRMSE_list[-which(is.na(NRMSE_list)) ]) ##  0.1909089
   error$NRMSE <- NRMSE_list
   nrmse_hist <- qplot(error[,3], xlab="NRMSE",ylab="# accessions",bins=25)+
     scale_x_continuous(breaks = seq(0,1,by=0.25),labels =seq(0,1,by=0.25) )
   
   ### Save
   # write.table(atlas1001_phenotype_matrix_imputed_onlypheno,
-  #             file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv',
+  #             file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv',
   #             row.names = F, quote = F, col.names = T)
   write.table(atlas1001_phenotype_matrix_imputed_onlypheno, file="data/atlas1001_phenotype_matrix_imputed_withID.csv", sep=",", row.names = F, quote = F, col.names = T)
   write.table(error, file="./tables/atlas1001_imputationaccuracy-perphenotype.tsv", sep="\t", quote = F, row.names = F)
   save(file="./figs/tmpobjects/nrmse_hist.rda", nrmse_hist)
+  
+  tmp <- read.table(file="./data/atlas1001_phenotype_matrix_imputed_withID.csv", sep=",", header = T)
+  head(tmp)
+  sum(tmp$rFitness_mli == -9)
   #use_data(atlas1001_phenotype_matrix_imputed_onlypheno, overwrite = T)
 
 }else{
   error<- read.table(file="./tables/atlas1001_imputationaccuracy-perphenotype.tsv", header = T)
-  nrmse_hist <- qplot(error[,3], xlab="NRMSE",ylab="# accessions",bins=25)+
-    scale_x_continuous(breaks = seq(0,1,by=0.25),labels =seq(0,1,by=0.25) )
+  head(error)
+  
+  #er <- error[error$pheno %in% colnames(pheno), ]
+  #colnames(pheno)[(!colnames(pheno) %in% er$pheno)]
+  #sum(duplicated(colnames(pheno)))
+  
+  error$nMSE <- "NA"
+  i<-1
+  for (i in 1:nrow(error)){
+    error$nMSE[i] <- error$MSE[i]/var(pheno[,i+1], na.rm = T)
+  }
+  error$NRMSE <- as.numeric(error$NRMSE)
+  range(error$NRMSE, na.rm = )
+  
+  summary(error$NRMSE)
+  error[error$NRMSE==1, ]
+  p<-error %>%  filter(NRMSE<0.155)
+  nrow(p)
+  u<-error %>%  filter(NRMSE>0.234)
+  nrow(u)
+  df <- error %>% filter(pheno!="Agro_PPV_infection")
+   mean_nrmse <- mean(df$NRMSE, na.rm = T)
+   summary(df$NRMSE)
+   
+   hpd_interval <- HPDinterval(as.mcmc(df$NRMSE), prob = 0.95)
+
+   
+   l <-mean_nrmse - IQR(df$NRMSE, na.rm = T)/2
+   u <- mean_nrmse + IQR(df$NRMSE, na.rm = T)/2
+   
+    sd_nrmse <- sd(df$NRMSE, na.rm = T)
+
+    # Calculate standard error
+    se_nrmse <- sd_nrmse / sqrt(nrow(df))
+    
+    margin_error <- qt(0.975, df = nrow(df) - 1) * se_nrmse
+
+# Calculate confidence interval
+ci_lower <- mean_nrmse - margin_error
+ci_upper <- mean_nrmse + margin_error
+
+    
+
+  library(coda)
+  library(ggplot)
+error$NRMSE
+  p1 <- ggplot(error, aes(x = NRMSE)) + 
+  geom_histogram(binwidth = 0.1, fill = "blue", color = "black") +  # Adjust binwidth and colors as needed
+  labs(x = "NRMSE", y = "Frequency") +  # Customize titles +
+    geom_vline(xintercept = c(0.071, 0.36), linetype = "dashed", color = "red", size = 1) +  # Add vertical lines at 'l' and 'u'
+  theme_minimal() 
+  p1
+  pdf(file="./figs/")
+  
+  
+  mean(error$nMSE, na.rm=T)
+  sum(error$nMSE>1.0, na.rm=T)
+  length(na.omit(error$nMSE))
+  nrow(error)
+
+  nrmse_hist <- qplot(error[,3], xlab="NRMSE",ylab="# accessions")+
+    scale_x_continuous(breaks = seq(0,1,by=0.25),labels =seq(0,1,by=0.25) ) +
+    geom_vline(xintercept = c(0.071, 0.36), linetype = "dashed", color = "black", size = .8)
+  
+  pdf(file="./figs/NRMSE.pdf", width = 3, height = 3)
   nrmse_hist
+  dev.off()
 }
 ```
 
@@ -202,7 +288,7 @@ We use principal components analysis (PCA) to decorrelate and decompose the esca
 RERUN=F 
 if(RERUN){
   atlasstrategies<-read.table("./data/pheno_fromgoogle.tsv",header = T)
-  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv', sep=" ", header = T)
+  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv', sep=" ", header = T)
   #raw_pheno <- read.table(file = './data/atlas1001_phenotypes_matrix.csv')
   
   # load field experiment information to get the 515 accessions
@@ -303,10 +389,16 @@ if(RERUN){
      legend.text = element_text(size=8), legend.title = element_blank()) 
    TargetphenotypeCat
    save(file="./figs/tmpobjects/TargetphenotypeCategories.rda", TargetphenotypeCat)
+   
+   pdf("./figs/TargetphenotypeCat.pdf", width = 4, height = 3)
+   TargetphenotypeCat
+   dev.off()
   
 }else{
   load("./figs/tmpobjects/TargetphenotypeCategories.rda")
   TargetphenotypeCat
+  
+  
 }
 ```
 
@@ -314,10 +406,28 @@ if(RERUN){
 ##This chunk makes Figure 1A.
 RERUN=F 
 if(RERUN){
+  
+  
+  pheno<- read.table(file="./data/atlas1001_phenotypes_matrix.csv", sep=",", header = T)
+  fitness <- c(colnames(pheno)[grep("Fitness", colnames(pheno))][c(3,4,7,8)], colnames(pheno)[grep("Survival", colnames(pheno))][c(3,4,7,8)],  colnames(pheno)[grep("Seed", colnames(pheno))][c(3,4,7,8)])
+  phenofit <- pheno[,colnames(pheno) %in% fitness]
+  phenofit[phenofit == -9] <- NA
+  which(phenofit==-9)
+  
+  phenofit<-data.frame(id=pheno$V1, phenofit)
+  dim(phenofit)
+  phenofit <- phenofit %>% mutate(normFit = normalize.(rFitness_mlp)) %>%
+    mutate(normSurv = normalize.(rSurvival_fruit_mlp)) 
+  
+  saveRDS(phenofit, file="./data/phenofit.rda")
+    
+  fit_dat <- merge(target_pheno, by="id", phenofit)
+  
+  
   ## run pca
   target_pheno<-readRDS(file="./data/TargetPhenoMatrix.rda")
   target_pheno[1:5,1:5]
-  pcaTarget<-prcomp(target_pheno)
+  pcaTarget<-prcomp(target_pheno[,-1])
   saveRDS(pcaTarget, file="./data/pcaTarget.rda") 
   load<-pcaTarget$sdev^2 /sum(pcaTarget$sdev^2)
   load
@@ -339,9 +449,12 @@ if(RERUN){
     # df <- data.frame(pc1= pcaTarget$x[,1] ,
     #                pc2 = -pcaTarget$x[,2] ,
     #                pc3 = pcaTarget$x[,3])
+  
   df <- data.frame(pc1= pcaTarget$x[,1] * load[1],
                    pc2 = -pcaTarget$x[,2] * load[2],
-                   pc3 = pcaTarget$x[,3] * load[1])
+                   pc3 = pcaTarget$x[,3] * load[1],
+                   fit = fit_dat$normFit,
+                   surv = fit_dat$normSurv)
   
   ## Make palette
   normalize.<-function(x) (x-min(x,na.rm=T)) / (max(x,na.rm=T)-min(x,na.rm=T))
@@ -358,8 +471,9 @@ if(RERUN){
  #png(file = './figs/PCrainbowScatterPlot_scaled.png')
  pdf(file = './figs/PCrainbowScatterPlot_scaled.pdf')
  PCplot_scaled <- ggplot(data=df, aes(x=pc1, y=pc2)) + 
-    geom_point(size=5, color=mypalette, alpha=0.95) +
+    geom_point( aes(size=surv),color=mypalette, alpha=0.95) +
     ylab("PC2")+ xlab("PC1 ") + ylim(-1,1) + xlim(-1,1.1)+
+    scale_size(range = c(2, 5)) +
     geom_hline(yintercept=0, linetype="dotted", color="grey50")+
     geom_vline(xintercept=0, linetype="dotted", color="grey50")+
     theme(legend.position = "right", legend.text = element_text("none")) +
@@ -394,7 +508,8 @@ if(RERUN){
     # annotate("segment", x = 0, xend = -3.7, y = 0, yend = -6.3, arrow = arrow(length = unit(.3,"cm")), color="grey20", size=.5) + 
     # annotate("text", x = -4.4, y =-6.5, label = "rhamnose") +
     annotate("segment", x = 0, xend = .53, y = 0, yend = -.47, arrow = arrow(length = unit(.3,"cm")), color="grey20", size=.5) + 
-    annotate("text", x = .7, y =-.5, label = "stomatal denisty")
+    annotate("text", x = .7, y =-.5, label = "stomatal denisty")+
+   coord_equal()
   plot_grid(PCplot_scaled)
   dev.off()
   save(PCplot_scaled, file="./figs/tmpobjects/Figure_1A_PCcolorgram_scaled.rda")
@@ -457,7 +572,7 @@ The PCA captures 23% of the total phenotype variation in the first two axes (Fig
 RERUN=F 
 if(RERUN){
   atlasstrategies<-read.table("./data/pheno_fromgoogle.tsv",header = T)
-  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv', sep=" ", header = T)
+  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv', sep=" ", header = T)
   dimp<-read.csv(file = './data/atlas_phenotype_matrix_withid.csv')
   tmp_data <-dimp[dimp[,1] %in% pheno$id,1:5]
   tmp_data <- tmp_data %>% filter(longitude>-15 &longitude<90) %>%  filter(latitude>32 &latitude<65)
@@ -492,7 +607,8 @@ if(RERUN){
            loadings.colour = "darkgrey",loadings.label.colour="black",
            loadings.label.size = 2.5)
   saveRDS(file="./figs/tmpobjects/1001_pcaallplot.rda", pcaallplot)
-  pdf(file="./figs/1001_pcaLoadingsPlot.pdf")
+  
+  pdf(file="./figs/1001_pcaLoadingsPlot.pdf", width = 6, height = 4)
   plot_grid(pcaallplot)
   dev.off()
   
@@ -500,6 +616,7 @@ if(RERUN){
    pcaallplot <- readRDS(file="./figs/tmpobjects/1001_pcaallplot.rda")
   # pcaallplot <- readRDS(file="./figs/tmpobjects/1001_pcaallplot_scaled.rda")
   plot_grid(pcaallplot)
+  
 }
 ```
 
@@ -514,6 +631,7 @@ We measured how many phenotypes were correlated with flowering time, WUE, and gr
 ```{r, echo=F, eval=T, message=F, warning=F}
 RERUN=F 
 if(RERUN){
+  library(Hmisc)
    ## correlation Ft and WUE with all escape/avoid phenotype variables
   pheno <- read.csv(file = './data/atlas1001_phenotypes_matrix_MR.csv')
   pheno[1:5,1:5]
@@ -526,7 +644,7 @@ if(RERUN){
   colnames(pheno) <- gsub("X", "", colnames(pheno))
   sum(colnames(pheno) %in% ss)
   ss_pheno <- pheno[,colnames(pheno) %in% ss]
-  ss_pheno <- apply(ss_pheno, 2, as.numeric)
+  #ss_pheno <- apply(ss_pheno, 2, as.numeric)
   87/509
   
   ft_wue <- cbind(ss_pheno[,"FT16"],  ss_pheno[,"Delta_13C"],  ss_pheno[,"FT10"],  ss_pheno[,"FT_mlp"],   ss_pheno[,"FT_mli"], ss_pheno[,"Growth_rate"])
@@ -539,9 +657,10 @@ if(RERUN){
   ss_pheno_cor_test$r[ss_pheno_cor_test$P > 0.05] <- NA
   dim(ss_pheno_cor_test$r)
   ss_pheno_cor_test$r[,1:6]
-  ss_pheno_cors_signif <- ss_pheno_cor_test$r[order(ss_pheno_cor_test$r[,2]),1:6]
+  ss_pheno_cors_signif <- data.frame(ss_pheno_cor_test$r[order(ss_pheno_cor_test$r[,2]),1:6])
   dim(ss_pheno_cors_signif)
   head(ss_pheno_cors_signif)
+  
   write.table(ss_pheno_cors_signif, file="./tables/FT_WUE_GR_TraitAssociations_signif_only_TableSI3.csv", sep=",", 
               quote = F, row.names = T, col.names = T)
   
@@ -630,6 +749,7 @@ We downloaded bioclimatic, temperature, precipitation, and evapotranspiration ra
 ## This chunk makes Figures 1 B, C & D
 RERUN=F 
 if(RERUN){
+  setwd("./safedata/natvar/")
   library(raster)
   library(missForest)
   library(rgdal)
@@ -639,134 +759,214 @@ if(RERUN){
   library(cowplot)
   theme_set(theme_cowplot())
   
-  target_pheno <- readRDS(file="./data/TargetPhenoMatrix.rda")
-  head(target_pheno)
-  dim(target_pheno)
-  
   # load field experiment information to get the 515 accessions
   load("./data/d4.rda")
   idsfield<-unique(d4$id)
+  index515_2029 <- which(dimp$id %in% idsfield)
+  index515 <- which(dimp$id %in% idsfield)
   
   ## phenotype
-  dimp<-read.csv(file = './data/atlas_phenotype_matrix_withid.csv')
-  dimp2<-read.csv(file = './data/atlas1001_phenotype_matrix_imputed_withID.csv')
+  dimp_2029 <- read.csv(file = './data/atlas_phenotype_matrix_withid.csv') ##2029
+  dimp2 <- dimp_2029[, c("id", "latitude", "longitude")]
+  head(dimp2)
   
- colnames(dimp2)[grep("name", colnames(dimp2))]
-   #dimp <- dimp[, c("id", "name", "latitude", "longitude", "FT16", "FT10", "Flowering_time", "Delta_13C","Growth_rate", "X94_Seed_Dormancy" )]
- 
-  dimp1 <- dimp[, c("id", "name", "latitude", "longitude")]
-  dimp2 <- dimp2[, c("id", "FT16", "FT10", "Flowering_time", "Delta_13C","Growth_rate", "X94_Seed_Dormancy" )]
-  dimp <- merge(dimp1, dimp2, by="id")
+  dimp_1001 <- read.csv(file = './data/atlas1001_phenotypes_matrix_MR.csv')
+  dimp_1001[1:5,1:5]
+  dimp1 <- dimp_1001[, c("id", "FT16", "FT10", "FT_mli", "FT_mlp", "Flowering_time", "Delta_13C","Growth_rate", "X94_Seed_Dormancy", "rSurvival_fruit_mlp", "rSurvival_fruit_mli", "rFitness_mlp", "rFitness_mli" )]
+  dimp1[1:5,1:5]
+  
+  
+  # head(dimp2)
+  #dimp1[,-1] <- apply(dimp1[,-1], 2, scale)
+  dimp <- merge(dimp1, dimp2, by="id", all.x=T)
   head(dimp)
   
-  index515_2029 <- which(dimp$id %in% idsfield)
-   index515 <- which(dimp$id %in% idsfield)
-  head(dimp)
-  
-
   ## climate
   clim <- read.table(file="./climate/2029gclimate.csv", sep=",",header = T)
   #clim <- read.table(file="./climate/worldclim2/2029g_climate_accessions.csv", sep=",",header = T)
   head(clim)
-  clim <-  data.frame(id=dimp1$id, clim)
+  clim <-  data.frame(id=dimp2$id, clim)
   
   ## Genetic PCs
   gimp <- read.csv(file="./data/atlas_phenotype_matrix_imputedwithpcs.csv")
-  colnames(gimp)[1:20]
-  gimp <-  data.frame(id=dimp1$id, gimp[,1:20])
-  
+  gimp <-  data.frame(id=dimp2$id, gimp[,1:20])
   cgimp <- merge(clim, gimp, by="id")
-  head(dimp)
+  # head(dimp)
+  
+  ## merge back and only the 1001 accessions
   df <- merge(dimp, cgimp, by="id")
+  head(df)
+  df <- data.frame(df)
   
-  #df <- data.frame(id= dimp$id, ft=dimp$FT16, ft2=dimp$FT10, ft3=dimp$Flowering_time, wue=dimp$Delta_13C, dorm=dimp$X94_Seed_Dormancy,gr=dimp$Growth_rate, lat=dimp$latitude, long=dimp$longitude, clim, gimp[,1:20])
+  ## get mean of temp. min and max, mean precip, and meanpet
+  df$meanMaxTemp <- apply(df[,c(57:68)], 1, mean)
+  df$meanMinTemp <- apply(df[,c(45:51)], 1, mean)
+  df$meanPrecip <- apply(df[,c(33:39)], 1, mean)
+  df$meanPET <- apply(df[,c(69:75)], 1, mean)
   
-  #df <- df %>% filter(long>-15 &long<90) %>%  filter(lat>32 &lat<65)
-  df$meanpet <- apply(df[,c(65:76)], FUN = mean, MARGIN = 1)
-  
-  
-  ## option re-ordering if you just want 515 accessions
-  #df <- df[index515_2029, ]
-  df <- df[index515, ]
-  df[1:5,1:5]
-  # pheno <- read.csv(file = './data/atlas1001_phenotype_matrix_imputed_withID.csv')
-  # pheno<-pheno[,1:2]
-  # dim(pheno)
-  # df <- merge(pheno, by.x="id", df, by.y="id")[,-2]
-  # df[1:5,1:5]
-  # dim(df)
-  ## correlation Ft and WUE with all climate and bioclim variables
+  df <- df %>% filter(longitude>-15 &longitude<90) %>%  filter(latitude>32 &latitude<65)
+  head(df)
 
-  df_cor <- cor(df[,-c(1,2)], use = "pairwise.complete.obs", method = "pearson")
-  df_p <- apply(df[,-c(1,2)], 2, as.numeric)
-  df <- apply(df[,-c(1,2)], 2, as.numeric)
-  head(df_p)
-  df_cor_test <- rcorr(df_p[,-1], type = "pearson")
+  #### check key correlations
+  ## wue and ft
+  cor.test(df$FT16, df$Delta_13C)
+  cor.test(df$FT16, df$bio18)
   
-  cor.test(df$ft2, df$meanpet)
-  
+
+  df <- apply(df[,-1], 2, as.numeric)
+  head(df)
+  dim(df)
+  df_cor_test <- rcorr(df[], type = "pearson")
+
+  ## remove non-sig. corrs from table
   df_cor_test$r[df_cor_test$P > 0.05] <- NA
   sort(df_cor_test$r[,1])
-  df_cors_signif <- df_cor_test$r[order(df_cor_test$r[,2]),1:6]
+  df_cors_signif <- df_cor_test$r[order(df_cor_test$r[,1]),1:14]
+  head(df_cors_signif)
+  
+  df_cors_mens <- df_cors_signif[grep("mean", rownames(df_cors_signif)),]
   df_cors_bio <- df_cors_signif[grep("bio", rownames(df_cors_signif)),]
-  write.table(df_cors_signif, file="./tables/TraitClimateAssociations_signif_only.csv", sep=",", 
-              quote = F, row.names = T, col.names = T)
-  
-  df_cor[1:5,1:5]
-  df_cor <- df_cor[order(df_cor[,1]),1:6]
-  #df_cor[grep("bio", rownames(df_cor)),]
-  write.table(df_cor, file="./tables/TraitClimateAssociations_TableSI5.csv", sep=",", 
-              quote = F, row.names = T, col.names = T)
-  
-  df_cor <- read.table(file="./tables/TraitClimateAssociations_TableSI5.csv", sep=",", header=T)
+  df_cors_prec <- df_cors_signif[grep("prec", rownames(df_cors_signif)),]
+ df_cors_temp <- df_cors_signif[c(grep("tmin", rownames(df_cors_signif)), grep("tmax", rownames(df_cors_signif))),]
  
+  
+ write_out <- rbind(df_cors_mens, df_cors_bio,df_cors_prec, df_cors_temp )
+  write.table(write_out, file="./tables/Trait-Clima-Assoc-SuppT4.csv", sep=",", 
+              quote = F, row.names = T, col.names = T)
+  
+  #  write.table(df_cors_bio, file="./tables/TraitBIOCLIMAssociations_signif_only_notlimitedto515.csv", sep=",", 
+  #             quote = F, row.names = T, col.names = T)
+  # 
+  # write.table(df_cors_signif, file="./tables/TraitClimateAssociations_signif_only.csv", sep=",", 
+  #             quote = F, row.names = T, col.names = T)
+  
+  # df_cor[1:5,1:5]
+  # df_cor <- df_cor[order(df_cor[,1]),1:6]
+  # #df_cor[grep("bio", rownames(df_cor)),]
+  # write.table(df_cor, file="./tables/TraitClimateAssociations_TableSI5.csv", sep=",", 
+  #             quote = F, row.names = T, col.names = T)
+  
+  # df_cor <- read.table(file="./tables/TraitClimateAssociations_TableSI5.csv", sep=",", header=T)
+  # 
 
+  plot(lm(df$FT16~df$bio12))
+  plot(y=df$FT16, x=df$bio12)
+  cor.test(df$FT16, df$bio1)
+  
   ## look at correlation of ft and wue, while accounting for latitude and 7 genetic PCs
+  df_i <- df[index515, ]
+  df[1:5,1:5]
   mypalette <- readRDS(file="./data/mypalette.rda")
-  colnames(df)[1:8] <- c("lat", "long", "ft", "ft2", "ft3", "wue", "gr", "dorm")
+  colnames(df)[3:16] <- c("lat", "long", "ft", "ft2", "ft3","ft4","ft5", "wue", "gr", "dorm", "survmlp", "survmli", "fitmlp", "fitmli")
   df <-  data.frame(df)
   
   fit <- lm(wue ~ ft + lat + GPC1 + GPC2 + GPC3 + GPC4 + GPC5 + GPC6 + GPC7 , data = df)
   summary(fit)
+
+  df$wue
+  lildf <- na.omit(data.frame(ft = df$FT16,
+                   bio= df$bio17,
+                   pal = mypalette))
   
-  r2 <- cor.test(df$wue, df$ft)
+  df$ft
+  cor.test(lildf$ft, lildf$bio)
+
+  
+ ft_annprecip <-  ggplot(lildf, aes(x=bio, y=ft)) + geom_point(color=lildf$pal, alpha=0.7) +
+    scale_color_gradient(low="white", high="black") +  #ylim(1.75,5) +
+    geom_smooth(aes(x=bio, y=ft), method=glm , color="#b2182b", se=T ) + 
+    labs(x="mean Annual precip. (mm)", y="Flowering time @ 16C") 
+ ft_annprecip
+ pdf(file="./figs/ft_annual_precip_plot.pdf", height = 4, width = 4)
+ ft_annprecip
+ dev.off()
+ 
+ summary(lm(data=df_2029, FT16 ~ bio12 + latitude + GPC1 + GPC2 + GPC3 + GPC4 + GPC5 ))
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+  #dim(justphenos)
+  df$survmli[df$survmli==-9] <- NA
+  df$fitmli[df$fitmli==-9] <- NA
+  
+  normalize.<-function(x) (x-min(x,na.rm=T)) / (max(x,na.rm=T)-min(x,na.rm=T))
+  
+  #df$survmlp <- scale(unlist(df$survmlp))
+  df$survmlp <- normalize.(df$survmlp)
+  df$fitmlp <- normalize.(df$fitmlp)
+  df$survmli <- normalize.(df$survmli)
+  
+  hist(df$survmlp)
+  r2 <- cor.test(df$wue, df$ft, method = "pearson")
   r2
+  hist(df$survmlp)
   lildf <- na.omit(data.frame(ft = df$ft,
                    wue = df$wue,
+                   fit = df$fitmlp,
+                   fit2 =  df$survmlp,
                    pal = mypalette))
- ft_wue_plot <-  ggplot(lildf, aes(x=ft, y=wue)) + geom_point(color=lildf$pal, cex=3, alpha=0.7) +
+  cor.test(lildf$ft, lildf$wue)
+  
+  range(lildf$fit2)
+   breaks <- c(0, .25, .5, .75, 1)  # Define the breaks
+ sizes <- c(1, 1.5, 2, 3.5, 5)  # Define the sizes corresponding to each break
+
+ ft_wue_plot <-  ggplot(lildf, aes(x=ft, y=wue)) + geom_point(aes(size=fit2), color=lildf$pal, alpha=0.7) +
     scale_color_gradient(low="white", high="black") +  #ylim(1.75,5) +
     geom_smooth(aes(x=ft, y=wue), method=glm , color="#b2182b", se=T ) + 
-    labs(x="Flowering time @ 16C", y="Delta_13C")
+    labs(x="Flowering time @ 16C", y="Delta_13C") +
+    scale_size(limits = c(0.53, 0.82), range = c(2, 5))
  ft_wue_plot
-  pdf(file="./figs/FtWUEscatterPlot.pdf")
+ 
+
+ 
+ plot_grid(ft_wue_plot, ft_wue_plot2, ft_wue_plot3, ft_wue_plot4, labels = c("surv.mlp", "surv.mli", "fit.mlp", "fit.mli"))
+ 
+ 
+  pdf(file="./figs/FtWUEscatterPlot.pdf", width = 4, height = 3)
   ft_wue_plot
   dev.off()
 
   colnames(df)
-  df$meanMaxtemp <-  apply(df[,c(53:64)], MARGIN = 1, FUN = mean)
-   fit <- lm(ft2 ~ meanMaxtemp + lat + GPC1 + GPC2 + GPC3 + GPC4, data = df)
+  df$meanMaxtemp <-  apply(df[,c(58:69)], MARGIN = 1, FUN = mean)
+  head(df)
+   fit <- lm(FT16 ~ meanMaxtemp + latitude + GPC1 + GPC2 + GPC3 + GPC4, data = df)
   summary(fit)
-  r2 <- cor.test(x=df$meanMaxtemp, y=df$ft2)
+  r2 <- cor.test(x=df$meanMaxtemp, y=df$FT10)
   r2
-  lildf <- na.omit(data.frame(wue = df$ft,
-                   bio1 = df$bio1,
+  lildf <- na.omit(data.frame(ft = df$ft,
+                   bio1 = df$bio17,
+                   fit = df$fitmlp,
+                   fit2 =  df$survmlp,
                    pal = mypalette))
-   FT_temp_plot_color <-  ggplot(lildf, aes(y=wue, x=bio1)) + geom_point(color=lildf$pal, cex=3, alpha=.7) +
+   FT_temp_plot_color <-  ggplot(lildf, aes(y=ft, x=bio1)) + 
+     geom_point(aes(size=fit2), color=lildf$pal, alpha=.7) +
     scale_color_gradient(low="white", high="black") +
-     geom_smooth(aes(y=wue, x=bio1), method=glm , color="#b2182b", se=T ) +
-     labs(y="Flowering time (days)", x="Mean Max. Temp.") +
-     xlim(50,250)
+     geom_smooth(aes(y=ft, x=bio1), method=glm , color="#b2182b", se=T ) +
+     labs(y="Flowering time (days)", x="Precip. of Warmest Quarter") +
+     xlim(50,250) + 
+    scale_size(limits = c(0.53, 0.82), range = c(2, 5))
    FT_temp_plot_color
  
+  pdf(file="./figs/wue-ft-climate-ft.pdf", width = 4.3, height = 6)
+  plot_grid(ft_wue_plot, FT_temp_plot_color, ncol=1, nrow=2)
+  dev.off()
   
-  
-  
-  fit <- lm(ft ~ Athprecip + lat + GPC1 + GPC2 + GPC3 + GPC4, data = df)
+  fit <- lm(FT16 ~ Athprecip + latitude + GPC1 + GPC2 + GPC3 + GPC4, data = df)
   summary(fit)
   colnames(df)
-  df$Athprecip <- apply(df[,c(29:33)], MARGIN = 1, FUN = mean)
-  r2 <- cor.test(x=df$bio12, y=df$wue)
+  colnames(df)
+  df$Athprecip <- apply(df[,c(34:40)], MARGIN = 1, FUN = mean)
+  r2 <- cor.test(x=df$Athprecip, y=df$FT16)
   
   r2
    
@@ -1007,7 +1207,7 @@ if(RERUN){
   #dimp[1:5, 1:10]
   
   # ## this is the order the pcs are in
-  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv', sep=" ", header = T)
+  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv', sep=" ", header = T)
   whichfield<-which(pheno$id %in% idsfield)
   idex515<-whichfield
   pheno <- pheno[idex515, 1:2]
@@ -1015,7 +1215,9 @@ if(RERUN){
    ## need to make sure climate data is in same order as PCs
   dat <- merge(dimp, by.x="id", pheno, by.y="id" )
   dat[1:5,1:10]
-  dat <- dat[,7:60]
+  colnames(dat)
+  dat <- dat[,7:61]
+  ncol(dat)
   # head(dat)
   
   ## PC1 modl
@@ -1025,18 +1227,53 @@ if(RERUN){
   ref_table <- data.frame(pc1=pcaTarget$x[,1], dat)
   head(ref_table)
   mod1<- randomForest(data= ref_table, pc1 ~ ., ntree=1000, importance=T)
-    trainsample<-sample(1:nrow(ref_table),round(nrow(ref_table)*0.66))
-    train<-ref_table[trainsample,]
-    test<-ref_table[-trainsample,]
-    cv1<-randomForest(data=train, pc1 ~ .)  
-    cor.test(predict(cv1,test),test[,'pc1']) ## not bad 0.73
+  nRMSE<- sqrt(mod1$mse[1000])/ (max(ref_table$pc1, na.rm=T) - min(ref_table$pc1, na.rm=T))
+  tests <- c()
+  
+  while(length(tests)<101){
+      trainsample<-sample(1:nrow(ref_table),round(nrow(ref_table)*0.66))
+        train<-ref_table[trainsample,]
+        test<-ref_table[-trainsample,]
+        cv1<-randomForest(data=train, pc1 ~ .)  
+        c<- cor.test(predict(cv1,test),test[,'pc1']) ## not bad 0.73
+        tests <- c(tests, c$estimate)
+  }
+  
+  mean(tests)
+  hpd_interval <- HPDinterval(as.mcmc(tests), prob = 0.95)
+
+  IQR(tests)
+  
+         trainsample<-sample(1:nrow(ref_table),round(nrow(ref_table)*0.66))
+        train<-ref_table[trainsample,]
+        test<-ref_table[-trainsample,]
+        cv1<-randomForest(data=train, pc1 ~ .)  
+        cor.test(predict(cv1,test),test[,'pc1']) ## not bad 0.73
   pre1<-raster::predict(euroclim,mod1)
+  
   pc1raw<-pre1
   writeRaster(pc1raw, filename='./data/pc1raw.tiff', format="GTiff")
 
   ## PC2
   ref_table <- data.frame(pc2=pcaTarget$x[,2], dat)
   mod2<- randomForest(data= ref_table, pc2 ~ ., ntree=1000, importance=T)
+  nRMSE<- sqrt(mod2$mse[1000])/ (max(ref_table$pc2, na.rm=T) - min(ref_table$pc2, na.rm=T))
+  tests <- c()
+  
+  while(length(tests)<101){
+      trainsample<-sample(1:nrow(ref_table),round(nrow(ref_table)*0.66))
+        train<-ref_table[trainsample,]
+        test<-ref_table[-trainsample,]
+        cv1<-randomForest(data=train, pc2 ~ .)  
+        c<- cor.test(predict(cv1,test),test[,'pc2']) ## not bad 0.73
+        tests <- c(tests, c$estimate)
+  }
+  
+  mean(tests)
+  hpd_interval <- HPDinterval(as.mcmc(tests), prob = 0.95)
+
+  
+  
     trainsample<-sample(1:nrow(ref_table),round(nrow(ref_table)*0.66))
     train<-ref_table[trainsample,]
     test<-ref_table[-trainsample,]
@@ -1316,7 +1553,7 @@ if(RERUN){
   
   pdf(file = 'figs/Floweingtime_Fit_TubMad_polynomial.pdf')
   pfit <- ggplot(dat) + geom_point(aes(x=mFT, y=normFit, color=code),size=1, alpha=0.4) +
-     geom_smooth(method="glm",formula = y ~ poly(x,4), aes(x=mFT, y=normFit, color=code), se = F) +xlim(-40,25) + 
+     geom_smooth(method="glm",formula = y ~ x, aes(x=mFT, y=normFit, color=code), se = F) +xlim(-40,25) + 
     scale_color_manual(values = c("#d6604d","#b2182b", "#4393c3", "#2166ac")) +
     ylab("lifetime fitness normalized") + xlab("Flowering time (mean centered)")  +
   theme(legend.position="none")
@@ -1366,13 +1603,16 @@ if(RERUN){
   theme(legend.position="none")
   pfruit
   dev.off()
-
+  
+  pdf(file="./figs/survival_seeds_scatterplot.pdf", width=3.5, height=6)
+  plot_grid(psurv, pfruit, ncol=1, nrow=2)
+  dev.off()
   
   saveRDS(pfit, file="figs/Floweingtime_Fit_TubMad.rda")
   saveRDS(psurv, file="figs/Floweingtime_Surv_TubMad.rda")
   saveRDS(pfruit, file="figs/Floweingtime_Fruit_TubMad.rda")
 
-  # pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv', sep=" ", header = T)
+  # pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv', sep=" ", header = T)
   # t <- data.frame(fit = pheno$rSurvival_fruit_tlp, ft =pheno$FT_thp, code=rep("tlp", length(pheno$rSurvival_fruit_tlp)))
   # m <- data.frame(fit = pheno$rSurvival_fruit_mlp, ft =pheno$FT_mlp, code=rep("mlp", length(pheno$rSurvival_fruit_mlp)))
   # tm <- rbind(t, m)  
@@ -1423,7 +1663,7 @@ In the database of 1862 phenotypes, flowering time is measured many times in dif
 ```{r, echo=F, eval=T, message=F, warning=F, fig.cap="Figure SII.1 Correlation of different flowering time measures across various studies.", fig.height=7, fig.width=7}
 RERUN=F 
 if(RERUN){
-  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv', sep=" ", header = T)
+  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv', sep=" ", header = T)
 
   # load field experiment information to get the 515 accessions
   load("./data/d4.rda")
@@ -2009,9 +2249,9 @@ if(RERUN){
 ```{r, echo=F, eval=T,message=F, warning=F, fig.cap="Figure SII.3 Multivariate selection analysis for 12 focal traits with dry-hot, cool-wet, and high/low planting density fitness data from Exposito-Alonso et al. 2019.", fig.height=7, fig.width=8.5}
 RERUN=F 
 if(RERUN){
-  source("~/safedata/natvar/analyses/phenoselection_multi_FUNCTIONS-copy.R")
+  source("./analyses/phenoselection_multi_FUNCTIONS-copy.R")
   atlasstrategies<-read.table("./data/pheno_fromgoogle.tsv",header = T)
-  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv', sep=" ", header = T)
+  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv', sep=" ", header = T)
   #pheno <- read.table(file = './data/atlas1001_phenotypes_matrix_MR.csv', sep=",", header = T)
   dim(pheno)
   lsel<-list()
@@ -2024,7 +2264,7 @@ if(RERUN){
   set.seed(0)
   #colnames(pheno)[grep("Vern",  colnames(pheno))]
   df <- pheno[idex515,colnames(pheno) %in% c("ABA_96h_low_water_potential", 
-                                            "Growth_rate", 
+                                            #"Growth_rate", 
                                             "Delta_13C", 
                                             "DSDS10", 
                                             #"Stomatal_index_in_first_leaf", ## only 55
@@ -2053,11 +2293,11 @@ if(RERUN){
   colnames(df) <- c("FloweringTime", 
                     "Dormancy", "RootRGR", "RootHorizIndex", #"Rhamnose", 
                     "Delta13C", "StomataDensity",
-                    "StomataSize", # "Vernalization",  
+                    "StomataSize",  #"Vernalization",  
                     "GerminationPerc", 
-                    "GrowthRate", 
+                   # "GrowthRate", 
                     "RGR", "ABA")
-  df <- apply(df,2,fn)
+  #df <- apply(df,2,fn)
   df <- apply(df,2,scale)
   dim(df)
   head(df)
@@ -2074,6 +2314,13 @@ if(RERUN){
   ## get fitness data from the raw phenotype data, so no imputed fitness. Use imputed phenotypes though
   pheno2 <- read.table(file = './data/atlas1001_phenotypes_matrix_MR.csv', sep=",", header = T)
   dim(pheno2)
+  
+    all_fitness <- pheno2[,c(fitness, survival, seeds)]
+  for (k in colnames(all_fitness)){
+    all_fitness[,k][all_fitness[, k] == -9] <- NA
+  }
+  sum(all_fitness==-9, na.rm=T)
+  
   # 
   # ## get the number of raw phenotypes covering the fitness data
   # Pheno_Fitnes_Overlap <- matrix(NA, nrow=length(all_fitness), ncol=13)
@@ -2098,14 +2345,14 @@ if(RERUN){
   dim(df)
   dim(pheno)
   # df <- df[,-10]
-  sum(pheno[,colnames(pheno) %in% all_fitness] == -9)
+  sum(pheno[idex515,colnames(pheno) %in% all_fitness] == -9, na.rm = T)
   
     lsel<- c()
   for(i in c("rFitness","rSurvival_fruit","rSeeds")){
-    for(j in c("mlp","mli","thi","thp")){
+    for(j in c("mlp","mli","mhi", "mhp", "thi","thp", "tli", "tlp")){
   #for (trait in all_fitness) {
       trait<-paste0(i,"_",j)
-      w=pheno[idex515,trait]/mean(pheno[idex515,trait], na.rm=T)
+      w=all_fitness[idex515,trait]/mean(all_fitness[idex515,trait], na.rm=T)
       print(trait)
       #w=relativefitness(atlas[,trait][idex515])
       z=df
@@ -2118,8 +2365,8 @@ if(RERUN){
       tmp2<-do.call(cbind,parseformatted(res$coefficient_linear)) %>% data.frame
       tmp2$param<-"s"
       sel<-rbind(tmp1,tmp2) 
-      sel$mean<-fn(sel$mean)
-      sel$se<-fn(sel$se)
+      sel$mean<-as.numeric(sel$mean)
+      sel$se<-as.numeric(sel$se)
       sel$lower=sel$mean - sel$se *1.96
       sel$upper=sel$mean + sel$se *1.96
       sel$trait<- colnames(df)
@@ -2144,16 +2391,17 @@ if(RERUN){
     geom_point(aes(x=mean.y, y=mean.x, shape=fitness, color=env, size=signi.x)) +
     scale_size_manual(values=c("ns" =.5, "*"=1, "**"=2, "***"= 3)) +
     scale_shape_manual(values=c(15, 19, 17)) +
-    scale_color_manual(values=c( '#e41a1c',"#F97559", "#234BC5", "#5B75C6")) + 
+    scale_color_manual(values=c( "#de6ddc", "#f54e91", '#e41a1c',"#F97559", "#234BC5", "#5B75C6", "#7ae6a3", "darkgreen")) + 
     geom_segment(aes(y=lower.x,yend=upper.x, x=mean.y,xend=mean.y, color=env), size=.25) +
     geom_segment(aes(y=mean.x,yend=mean.x, x=upper.y,xend=lower.y, color=env), size=.25) +
     geom_hline(yintercept=0, linetype="dashed")+
     geom_vline(xintercept=0, linetype="dashed")+
     ylab("b (direct selection") + xlab("s (total selection)") +
     facet_wrap(~trait, scales = 'fixed') +
+    xlim(-.4,0.2) + ylim(-0.4,0.4)+
     scale_x_continuous("s (total selection)") + scale_y_continuous("b (direct selection")
  sel_plot
-  pdf(file = 'figs/MultivariatePhenSel_ExpositoAlonso.pdf')
+  pdf(file = 'figs/MultivariatePhenSel_ALL_Envs_suppplot.pdf', width = 7.5, height=6)
   sel_plot
   dev.off() 
   
@@ -2410,7 +2658,14 @@ if(RERUN){
     #geom_label(size=2) 
   dev.off()
   
-  
+    # Kingsolver & Diamond 2011
+    install.packages("lmodel2")
+    library(lmodel2)
+    x_centered <- lsel4$mean.x - mean(lsel4$mean.x) #B
+    y_centered <- lsel4$mean.y - mean(lsel4$mean.y) #s
+    # Fit a reduced major axis regression model
+    model <- lmodel2(y_centered ~ x_centered)
+
   
     lsel5 <- lsel2 %>% 
     filter(env=="thi") %>% 
@@ -2453,7 +2708,7 @@ RERUN=F
 if(RERUN){
   source("~/safedata/natvar/analyses/phenoselection_multi_FUNCTIONS-copy.R")
   atlasstrategies<-read.table("./data/pheno_fromgoogle.tsv",header = T)
-  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv', sep=" ", header = T)
+  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv', sep=" ", header = T)
   #pheno <- read.table(file = './data/atlas1001_phenotypes_matrix_MR.csv', sep=",", header = T)
   dim(pheno)
   pheno[1:5,1:5]
@@ -2722,7 +2977,7 @@ if(RERUN){
   # colnames(target_Zcors)[8] <- "X72_Vern_Growth"
   # rownames(target_Zcors)[8] <- "X72_Vern_Growth"
   
-  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv', sep=" ", header = T)
+  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv', sep=" ", header = T)
   sum(colnames(pheno) %in% targets)
   targets %in% colnames(pheno)
   
@@ -3158,7 +3413,7 @@ More specifically, we assesed the differences in phenotypic correlations of raw 
 ```{r, echo=F, eval=T, message=F, warning=F, fig.cap="Figure SIII.2 Pearson's correlation coefficients for 12 target phenotypes used in multivariate selection analysis. Upper right triangle are the correlations of imputed phenotype data and the lower left triangle are the correlations of raw data.", fig.width=5, fig.height=5}
 RERUN=F
 if(RERUN){
-  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv', sep=" ", header = T)
+  pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv', sep=" ", header = T)
   pheno_raw <- read.table(file = './data/atlas1001_phenotypes_matrix_MR.csv', sep=",", header = T)
   dim(pheno)
   
@@ -3920,6 +4175,9 @@ if(RERUN){
   write.table(stats_df, file="./tables/normGWA_h2estimates.tsv", sep="\t", quote = F, col.names = T, row.names = F)
   
   
+ stats_df <- read.table( file="./tables/rawGWA_h2estimates.tsv", sep="\t", header = T)
+ stats_df[grep("FT", stats_df$name),]
+ 
   ######===========Plotting h2===========#########
   dirs <-read.table("./data/atlas_phenotype_names_numaccessions_willannotatemanual_strategies_MR.tsv",
                   header = T,
@@ -4375,7 +4633,15 @@ boxplot_h2_escape_avoid
 RERUN=F
 if(RERUN){
   st_all <- readRDS(file="./data/all_gwa_stats_table.rda")
+  st_all[1:5,1:5]
+  sum(st_all$phenotype %in% d$phenotype)
+   d$phenotype[!d$phenotype %in% st_all$phenotype]
   
+  pheno <- read.table(file="./data/atlas1001_phenotypes_matrix_MR.csv", header = T, sep=",")
+  pheno[1:5,1:5]
+  
+  
+  #bslmm.filt <- readRDS(file="./data/bslmm.filt.dat.rda")
   
   low_h2 <- st_all[st_all$pve.x <= 0.01 & st_all$pve.y <= 0.01,]
   low_high_h2 <- rbind(low_h2, st_all[st_all$pve.x > 0.99 & st_all$pve.y > 0.99,])
@@ -4476,7 +4742,7 @@ if(RERUN){
                                             "Growth_rate", 
                                             "Delta_13C", 
                                             "DSDS10", 
-                                            "Stomatal_index_in_first_leaf", ## only 55
+                                            "stomatasize", ## only 55
                                             "stomata_density",
                                             "FT16",  
                                             "d8_10C_perc", 
@@ -4489,7 +4755,7 @@ if(RERUN){
    target_GWA_stats_only <- target_pheno_GWA_stats[,c(1,3,7,11,15,19,23, 27,34, 40)]
    target_GWA_stats_only$phenotype <- c("growth after Vernalization", "ABA", "germination percentage", "detla_13C", "dormancy",
                                         "Flowering time", "growth rate", "root RGR", "RGR","root horizontal index", "stomata density",
-                                        "stomatal index in first leaf")
+                                        "stomata size")
    
    colnames(target_GWA_stats_only) <- gsub("_median", "", colnames(target_GWA_stats_only))
    colnames(target_GWA_stats_only)[9:10] <- c("pve_norm", "pve_raw")
@@ -4719,6 +4985,99 @@ norm_h2_varplots
 
 ##We visualized all Z scores across all phenotypes simultaneously (Fig. 1b,d) using a t-distributed stochastic neighbor embedding (t-SNE) algorithm (Maaten and Hinton 2008; Krijthe 2015). The Z scores were also correlated across m x m traits (Fig S3). The resulting m x m matrix . These correlations were also conducted for SNPs of different genome annotations using TAIR10 reference (http://arabidopsis.org). 
 ```
+
+### Heritability Summaries
+
+```{r, echo=FALSE, eval=T, warning=FALSE, fig.width=6, fig.height=4, fig.cap="Figure SIII.7 Number of phenotypes with SNP-based heritability estimates within 0.15 difference of each other (red) compared to phenotypes with a great than 0.15 difference across estimation techniques (purple).", message=FALSE}
+## this chunk needs fixed, object in else doesnt load/run
+RERUN=F
+if(RERUN){
+  st_all <- readRDS(file="./data/all_gwa_stats_table.rda")
+  dim(st_all)
+  head(st_all)
+  
+  summary(st_all$se_pve.x)
+  
+  norm.filt <- st_all %>% filter(se_pve.x<0.25)
+  mean(norm.filt$pve.x)
+  mean(norm.filt$pve.x) - IQR(norm.filt$pve.x)/2
+  mean(norm.filt$pve.x) + IQR(norm.filt$pve.x)/2
+  
+  raw.filt <- st_all %>% filter(se_pve.y<0.25)
+  mean(raw.filt$pve.y)
+  mean(raw.filt$pve.y) - IQR(raw.filt$pve.y)/2
+  mean(raw.filt$pve.y) + IQR(raw.filt$pve.y)/2
+  
+  st_all$HPDrange <- st_all$PVE_97.5.-st_all$PVE_2.5. 
+  hist(st_all$HPDrange)
+  
+  
+  
+  bm <- st_all %>% filter(HPDrange <=0.8)
+  
+  st_all %>% select(paper, phenotype, )
+  st_all[,13]
+  to_write_h2_full_Table<- st_all[, c(2, 1, 3, 6:29, 34, 35, 40,41)]
+  head(to_write_h2_full_Table)
+  write.table(to_write_h2_full_Table, file="./tables/all_h2_Estiamtes_supp15.csv", col.names =T, row.names = F, quote = F, sep=",")
+  
+  IQR(to_write_h2_full_Table$pve.x)
+  mean(to_write_h2_full_Table$pve.x) 
+  mean(to_write_h2_full_Table$pve.x) - IQR(to_write_h2_full_Table$pve.x)/2
+  
+  
+  bmfilt <- readRDS(file="./data/bslmm.filt.dat.rda")
+  mean(bmfilt$PVE_mean)
+  mean(bmfilt$PVE_mean) - IQR(bmfilt$PVE_mean)/2
+  mean(bmfilt$PVE_mean) + IQR(bmfilt$PVE_mean)/2
+
+  mean(bmfilt$n.gamma_mean)
+  mean(bmfilt$n.gamma_mean) - IQR(bmfilt$n.gamma_mean)/2
+  mean(bmfilt$n.gamma_mean) + IQR(bmfilt$n.gamma_mean)/2
+
+
+  
+  ## what is the distribution of std. error of pve.x and y, norm and raw
+  percentiles <- c(5, 10, 25, 50, 75, 90, 95)
+  percentile_values <- quantile(st_all$se_pve.y, probs = percentiles / 100)
+  
+  ## quick check to see dist. of error of h estimates
+  ggplot(st_all, aes(x = se_pve.y)) +
+    geom_density(fill = "skyblue", color = "darkblue", alpha = 0.7) + xlim(0,1)+
+    theme_minimal() +
+    geom_vline(xintercept = percentile_values, linetype = "dashed", color = "purple") +
+    labs(title = "",
+         x = "st.error of PVE",
+         y = "Density")
+  
+  filt.dat <-  st_all %>% filter(se_pve.x<0.499) %>% filter(se_pve.y<.464)
+  head(filt.dat)
+  dim(filt.dat)
+
+  ## quick check to see dist. of error of PVE estimates from BSLMM
+  filt.dat$PVErange <- apply(filt.dat[, c( "PVE_2.5.", "PVE_97.5.")], 1, function(x) diff(range(x)))
+  
+   percentiles <- c(5, 10, 25, 50, 75, 90, 95)
+   percentile_values <- quantile(filt.dat$PVErange, probs = percentiles / 100)
+  
+   ggplot(filt.dat, aes(x = PVErange)) +
+    geom_density(fill = "skyblue", color = "darkblue", alpha = 0.7)+
+    theme_minimal() +
+    geom_vline(xintercept = percentile_values, linetype = "dashed", color = "purple") +
+    labs(title = "",
+         x = "2.5-97.5 of PVE",
+         y = "Density")
+    
+   
+    ## Do diff cut offs and look at trait architectures generally 
+    
+
+}else{
+  
+} 
+```   
+
+
 
 ################################################################################
 ## III.4 Genetic correlations
@@ -5029,6 +5388,59 @@ if(RERUN){
 }
 ```
 
+### Heritability correlations (again)
+
+```{r, echo=F, eval=F, warning=F}
+RERUN=F
+if(RERUN){ 
+
+  bslmm.filt.dat <- readRDS(file="./data/bslmm.filt.dat.rda")
+  head(bslmm.filt.dat)
+  
+  ## get new cats
+  newcats <- read.table(file="./data/atlas_pheno_NewCategors.tsv", sep = "\t", header = T)[,c(2,4)]
+  head(newcats)
+  bslmm.filt.dat <- merge(bslmm.filt.dat, newcats, by="phenotype")
+  
+  cor.test(y=bslmm.filt.dat$PVE_mean, x=bslmm.filt.dat$pve.x)
+  
+  
+  hist(bslmm.filt.dat$numaccessions)
+  above50<- bslmm.filt.dat %>% filter(numaccessions>100)
+   cor.test(y=above50$PVE_mean, x=above50$pve.x)
+  
+  above50$h2diff <- abs(above50$PVE_mean-above50$pve.x)
+  hist(above50$h2diff )
+  
+  above50_filt <- above50 %>% filter(h2diff < 0.25)
+   cor.test(y=above50_filt$PVE_mean, x=above50_filt$pve.x)
+   
+  ggplot(above50_filt, aes(y=PVE_mean, x=pve.x)) +
+    geom_point(aes(size=se_pve.x))
+  
+  ## Used this in paper after filtering out inconsisten h2 estimates that were inconsisten to the range of 25%
+  ## estimates had correlation of 0.959
+  mean(above50_filt$PVE_mean)
+ c(mean(above50_filt$PVE_mean)-IQR(above50_filt$PVE_mean)/2, mean(above50_filt$PVE_mean)+ IQR(above50_filt$PVE_mean)/2)
+ ## h2 = 0.49 [0.20-0.79]) 
+ 
+ #mean(above50_filt$pve.x)
+  mean(above50_filt$pve.y)
+  c(mean(above50_filt$pve.y)-IQR(above50_filt$pve.y)/2, mean(above50_filt$pve.y)+ IQR(above50_filt$pve.y)/2)
+  
+  
+    mean(above50_filt$n.gamma_mean)
+ c(mean(above50_filt$n.gamma_mean)-IQR(above50_filt$n.gamma_mean)/2, mean(above50_filt$n.gamma_mean)+ IQR(above50_filt$n.gamma_mean)/2)
+  ##  55.77 potentially causal loci [29.1-82.4]
+     mean(above50_filt$PGE_mean)
+ c(mean(above50_filt$PGE_mean)-IQR(above50_filt$PGE_mean)/2, mean(above50_filt$PGE_mean)+ IQR(above50_filt$PGE_mean)/2)
+##PGE = 0.41 [0.28-0.55]
+  
+}else{
+  
+}
+```
+
 
 ### Genetype-Phenotype Correlations
 
@@ -5226,7 +5638,7 @@ if(RERUN){
   setwd("~/safedata/natvar/")
   pheno<- read.table(file = 'data/atlas1001_rawPheno_Quantile.tsv', sep = "\t", header = T)
   ## used imputed data and got super weird estimates of heritability and genetic correlation
-  #pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv', sep=" ", header = T)
+  #pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv', sep=" ", header = T)
   pheno <- read.table(file = 'data/atlas1001_imputedPheno_Quantile.tsv', sep = "\t", header = T)
   
   head(pheno)
@@ -5557,7 +5969,125 @@ if(RERUN){
 
 ```
 
-### Analyzing mGWAS  
+### Plotting GWA 
+
+##### Flowering time
+
+```{r, echo=F, eval=T, message=F, warning=F}
+RERUN=F
+if(RERUN){
+  library(lattice)
+  source("./analyses/QQPlotbyMatthewFlickinger.R")
+  
+ # ft_bslmm <- data.table::fread(file="./phenotypes/1001_Consortium_Cell_2016_PID_27293186/1001/bslmm_FT16/output/1001_Consortium_Cell_2016_PID_27293186_bslmm_FT16.assoc.txt.param.txt") head(ft_bslmm)
+ # 
+ # ft_reg <- data.table::fread(file="./phenotypes/1001_Consortium_Cell_2016_PID_27293186/1001/FT16/output/1001_Consortium_Cell_2016_PID_27293186norm.lmm.assoc.txt") %>% select(chr,rs, ps, af, beta, se, p_score)
+ # head(ft_reg)
+ # ft_norm <- data.table::fread(file="./phenotypes/1001_Consortium_Cell_2016_PID_27293186/1001/norm_FT16/output/1001_Consortium_Cell_2016_PID_27293186norm.lmm.assoc.txt") %>% select(chr,rs, ps, af, beta, se, p_score)
+ # head(ft_norm)
+  
+  #ft_bslmm <- data.table::fread(file="./gwaresults/1001_Consortium_Cell_2016_PID_27293186_bslmm_FT16.assoc.txt.param.txt")
+  #dim(ft_bslmm)
+  
+  ft_gwa <- data.table::fread(file="./gwaresults/1001_Consortium_Cell_2016_PID_27293186norm.lmm.assoc.txt")
+  head(ft_gwa)
+  norm_ft <- data.table::fread(file="./gwaresults/normFT.lmm.assoc.txt")
+  head(norm_ft)
+
+  # qqplot <- qqunif.plot(ft_reg$p_score) 
+  # qqplot
+   qqplot <- qqunif.plot(norm_ft$p_score) 
+   qqplot
+  
+  #install.packages("devtools", dependencies = T)
+  #library(devtools)
+  #install_github("drveera/ggman")
+  library(ggman)
+  
+  thresh <- -log10(0.05/nrow(ft_gwa))
+  filt_ft_gwa <- ft_gwa %>% filter(p_score<0.1) %>% 
+    filter(se < 1)
+ft_gwa1 <- ggman(filt_ft_gwa, snp = "rs", bp = "ps", chrom = "chr", pvalue = "p_score", relative.positions = T, sigLine = thresh, title="") +
+  scale_color_manual(values=c("#1a1a1a","#bababa")) 
+ ft_gwa1
+   
+ 
+   thresh <- -log10(0.05/nrow(norm_ft))
+  filt_norm_ft <- norm_ft %>% filter(p_score<0.05) %>% 
+    filter(se < .05)
+ft_gwa2_norm <- ggman(filt_norm_ft, snp = "rs", bp = "ps", chrom = "chr", pvalue = "p_score", relative.positions = T, sigLine = thresh, title="") +
+  scale_color_manual(values=c("#1a1a1a","#bababa")) 
+ ft_gwa2_norm
+ 
+   filt_norm_ft$log10 <- -log10(filt_norm_ft$p_score)
+  filt_norm_ft %>% filter(log10 >thresh) %>% filter(chr==1) 
+  
+ 
+ pdf(file="./figs/ft_manhattanplot.pdf", width=8, height=3)
+ ft_gwa2_norm
+ dev.off()
+   
+ ## Delta_C13
+ dc13_gwa <- data.table::fread(file="./gwaresults/delta13C_raw.lmm.assoc.txt")
+  head(dc13_gwa)
+  norm_dc13 <- data.table::fread(file="./gwaresults/Meaux_Dittberner_MolEcol_2018_PID_30118161norm.lmm.assoc.txt")
+  head(norm_dc13)
+ 
+ 
+   #thresh <- -log10(0.05/nrow(dc13_gwa))
+  filt_dc13_gwa <- dc13_gwa %>% filter(p_score<0.1) %>% 
+    filter(se < 0.1)
+   thresh <- -log10(0.05/nrow(norm_dc13))
+ dc13_gwa1 <- ggman(filt_dc13_gwa, snp = "rs", bp = "ps", chrom = "chr", pvalue = "p_score", relative.positions = T, sigLine = thresh, title="") +
+  scale_color_manual(values=c("#1a1a1a","#bababa")) 
+ dc13_gwa1
+ 
+   filt_norm_dc13 <- norm_dc13 %>% filter(p_score<0.1) %>% 
+    filter(se < 0.1)
+   thresh <- -log10(0.05/nrow(norm_dc13))
+ dc13_gwa2 <- ggman(filt_norm_dc13, snp = "rs", bp = "ps", chrom = "chr", pvalue = "p_score", relative.positions = T, sigLine = thresh, title="") +
+  scale_color_manual(values=c("#1a1a1a","#bababa")) 
+ dc13_gwa2
+   
+ pdf("./figs/dc13_norm_manhattanPlot.pdf", width = 8, height = 2.5)
+ dc13_gwa2
+ dev.off()
+   
+ 
+ 
+  filt_dc13_gwa$log10 <- -log10(filt_dc13_gwa$p_score)
+  filt_dc13_gwa %>% filter(log10 >thresh) %>% filter(chr==1) 
+  
+    #FRI_chr_posrange <- c(4, 269026, 270358)
+    ## +/- 1kb
+    FRI_chr_posrange <- c(4, 268026, 271358)
+  FRI_chr_posrange
+  FRI_snps <- filt_norm_ft %>% filter(chr==4) %>% 
+    filter(ps > FRI_chr_posrange[2]) %>% 
+    filter(ps < FRI_chr_posrange[3])
+  dim(FRI_snps)
+  
+  #FLC_chr_posrange <- c(5, 3173724, 3179155)
+    FLC_chr_posrange <- c(5, 3172724, 3180155)
+  FLC_chr_posrange
+  FLC_snps <- filt_norm_ft %>% filter(chr==5) %>% 
+    filter(ps > FLC_chr_posrange[2]) %>% 
+    filter(ps < FLC_chr_posrange[3])
+  dim(FLC_snps)
+  
+  fri_flc_highlights <- c(FRI_snps$rs, FLC_snps$rs)
+  fri_flc_plot <- ggmanHighlight(ft_gwa2_norm, highlight = fri_flc_highlights, size = 0.3) 
+  fri_flc_plot
+  
+  
+}else{
+  
+}
+
+
+```
+
+
 
 ##### Flowering time and Delta_C13
 
@@ -5573,6 +6103,9 @@ if(RERUN){
   
   ## multivariate gwa
   tmp1<-data.table::fread(file="./multivarGWAS/mGWAS_FT16_Delta_13C/output/mGWAS_FT16_Delta_13C.assoc.txt") %>% select(chr,ps, rs, af, beta_1, beta_2, p_score) 
+  head(tmp1)
+  
+  tmp1<-data.table::fread(file="./gwaresults/mGWAS_FT16_Delta_13C.assoc.txt") %>% select(chr,ps, rs, af, beta_1, beta_2, p_score) 
   head(tmp1)
   
   library(lattice)
@@ -6804,7 +7337,7 @@ if(RERUN){
 <!--   setwd("~/safedata/natvar/") -->
 <!--   #pheno<- read.table(file = 'data/atlas1001_rawPheno_Quantile.tsv', sep = "\t", header = T) -->
 <!--   ## used imputed data and got super weird estimates of heritability and genetic correlation -->
-<!--   #pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv', sep=" ", header = T) -->
+<!--   #pheno <- read.table(file = 'data/atlas1001_phenotype_matrix_imputed_withID.csv', sep=" ", header = T) -->
 <!--   pheno <- read.table(file = 'data/atlas1001_imputedPheno_Quantile.tsv', sep = "\t", header = T) -->
 
 <!--   head(pheno) -->
@@ -7183,8 +7716,8 @@ if(RERUN){
 RERUN=F
 if(RERUN){
   
-  # library(devtools)
-  # install_github("drveera/ggman")
+  library(devtools)
+  install_github("drveera/ggman")
   library(ggman)
   setwd("~/safedata/natvar/")
   
@@ -7246,18 +7779,48 @@ if(RERUN){
   
     ft_dc13_fitness_gray <- ggman(tmp1_fitness, snp = "rs", bp = "ps.x", chrom = "chr.x", pvalue = "p_score.x", relative.positions = T, sigLine = thresh, title="") +  geom_hline(yintercept = 5.18, linetype="dashed") +
     geom_point(aes(color=as.factor(chr_col), size=as.factor(chr_col)), shape=19) + ylim(2, 8.5) + ylab("") + xlab("") +
-    scale_color_manual(values=c("1"="#78c679", "0" = "#bd0026", "2"="#636363", "3"="#bdbdbd")) +
-      scale_size_manual(values=c("1"=2, "0" = 2, "2"=0.75, "3"=0.75))  +
-      #  theme(legend.position = "none")+
-      #   # panel.grid = element_blank(),
-      #   # axis.title = element_blank(),
-      #   # axis.text = element_blank(),
-      #   # axis.ticks = element_blank(),
-      #   # panel.background = element_blank()) +
-      # theme_void() +
-      theme(legend.position = "none")
-
+    scale_color_manual(values=c("1"="#78c679", "0" = "#bd0026", "2"="#636363", "3"="#bdbdbd")) + scale_size_manual(values=c("1"=2, "0" = 2, "2"=0.75, "3"=0.75))  +
+       theme(legend.position = "none")
   ft_dc13_fitness_gray
+  
+  gene_pos_raw <- read.table(file="./data/gene_pos_raw.tsv", header=T)
+  head(gene_pos_raw)
+ df <- gene_pos_raw
+  get_alleles_in_genes <- function(df, big_df){
+    output_list <- c()
+    for (i in 1:nrow(df)){
+      snps <- big_df %>% filter(chr.x==df[i,"chr"]) %>% 
+        filter(ps.x > df[i,"start"]) %>% 
+        filter(ps.x < df[i,"end"])
+      output_list <- c(output_list, snps$rs)
+    }
+    return(output_list)
+  }
+  
+  alles_to_plot <- get_alleles_in_genes(gene_pos_raw, tmp1_fitness)
+  
+    fri_flc_plot <- ggmanHighlight(ft_dc13_fitness_gray, highlight = alles_to_plot)
+  fri_flc_plot
+  
+  # tmp1_fitness$highlight <- 0
+  # tmp1_fitness$highlight[tmp1_fitness$rs %in% alles_to_plot] <- 1
+  # 
+  
+  # hghlight_plot <- ggman(tmp1_fitness, snp = "rs", bp = "ps.x", chrom = "chr.x", pvalue = "p_score.x", relative.positions = T, sigLine = thresh, title="") +  geom_hline(yintercept = 5.18, linetype="dashed") +
+  #   geom_point(aes(color=as.factor(highlight)),size=1, shape=19) + ylim(2, 8.5) + ylab("") + xlab("") +
+  #   scale_color_manual(values=c("1"="#bd0026", "0"="#bdbdbd")) +
+  #      theme(legend.position = "none")
+  # 
+  # hghlight_plot
+  
+  
+  pdf(file="./figs/NoteableAlles_plotted_onGWA.rda", width = 7, height = 2.5)
+  fri_flc_plot
+  dev.off()
+  
+  
+  
+  
   
   png(file="./figs/ft_dc13_manhatPlot_fitsel.png", units="in",res=2400, width = 7, height = 3, bg="transparent")
   ft_dc13_fitness_gray
@@ -7890,464 +8453,983 @@ table((beta_2 * beta_1)*abs(beta_1)/abs(beta_1) > 0, beta>0) %>% fisher.test()
 
 ```
 
-<!-- ################################################################################ -->
-<!-- # V. Breaking the Link with CRSPR -->
-<!-- ################################################################################ -->
-
-<!-- ## V.1 Pilot Drought Experiment -->
-
-<!-- ```{r, echo=F, eval=T, message=F, warning=F, fig.cap="", fig.width=8, fig.height=8, fig.cap="Selection once genetic correlation has been altered by CRISPR editing."} -->
-<!-- RERUN=F -->
-<!-- if(RERUN){ -->
-
-<!--   setwd("~/safedata/natvar/") -->
-
-<!--   ## drought exp. data -->
-<!--   seedweights<-read.csv("~/safedata/natvar/LauraAnalysis/seed_weights.csv") -->
-<!--   head(seedweights) -->
-
-<!--   pheno<-read.csv("~/safedata/natvar/LauraAnalysis/wrangled_data_crispr.csv") -->
-<!--   head(pheno) -->
-
-<!--   pheno<-merge(pheno,seedweights, by="NEW_ID") #deletes one individual... look into later -->
-<!--   pheno$weight_w_paper<-fn(pheno$weight_w_paper) -->
-
-<!--   pheno$rSeedWeight <- pheno$weight_w_paper - 0.3992667 -->
-<!--   mean(pheno$rSeedWeight, na.rm=T) -->
-<!--   hist(pheno$rSeedWeight) -->
-<!--   head(pheno) -->
-<!--   dim(pheno) -->
-
-<!--   #pheno$founder<-fn(pheno$founder) -->
-<!--   pheno$founder <- as.character(pheno$founder) -->
-<!--   pheno$founder[pheno$founder==""] <- "c" -->
-<!--   head(pheno) -->
-
-<!--   ### Look at natural ecotypes first -->
-<!--   founder_pheno <- pheno %>% filter(founder =="f") -->
-<!--   dim(founder_pheno) -->
-<!--   founder_pheno <- founder_pheno %>% filter(drought =="optimal") -->
-<!--   dim(founder_pheno) -->
-<!--   founder_pheno$group_id <- as.factor(paste(founder_pheno$real_id, founder_pheno$drought, sep = "_")) -->
-<!--   head(founder_pheno) -->
-
-<!--   small_fdrPheno <- founder_pheno[, c("real_id","group_id", "days_to_flowering", "days_to_wilting", "rSeedWeight")] -->
-<!--   #small_fdrPheno <- na.omit(small_fdrPheno) -->
-<!--  uniq_ids <- unique(small_fdrPheno$real_id) -->
-<!--  days_to_flowering <- c() -->
-<!--  days_to_wilting <- c() -->
-<!--  rSeedWeight <- c() -->
-<!--  id <- uniq_ids[1] -->
-<!--  for (id in uniq_ids){ -->
-<!--    tmp <- small_fdrPheno[small_fdrPheno$real_id==id,] -->
-<!--    days_to_flowering <- c(days_to_flowering, mean(tmp$days_to_flowering, na.rm=T)) -->
-<!--    days_to_wilting <- c(days_to_wilting, mean(tmp$days_to_wilting, na.rm=T)) -->
-<!--    rSeedWeight <- c(rSeedWeight, mean(tmp$rSeedWeight, na.rm=T)) -->
-<!--  } -->
-<!--  small_fdrPheno <- data.frame(id=uniq_ids, -->
-<!--                               days_to_flowering, days_to_wilting, rSeedWeight) -->
-
-
-
-<!--   ## Load Dittberner imputed data -->
-<!--   dittb_dC13 <- read.table(file="./data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv", -->
-<!--                            header = T, sep=" ") -->
-<!--   dittb_dC13 <- dittb_dC13 %>% select(id, Delta_13C) -->
-
-<!--   sum(dittb_dC13$id %in% unique(founder_pheno$real_id)) -->
-<!--   small_fdrPheno <- merge(small_fdrPheno, by.x="id", dittb_dC13, by.y="id") -->
-<!--   dim(small_fdrPheno) -->
-<!--   ## adjust all Delta_C13 values by col-0 value; except Col-0 not used in dittberner, so use a close-by central Germany accession -->
-<!--   small_fdrPheno$adj_Delta_13C <- small_fdrPheno$Delta_13C/abs(-37.21) -->
-<!--   head(small_fdrPheno) -->
-
-<!--   ### plots -->
-<!--  # small_fdrPheno<- small_fdrPheno[!is.na(small_fdrPheno$rSeedWeight), ] -->
-<!--  # small_fdrPheno_2 <- small_fdrPheno[, c("rSeedWeight", "Delta_13C")] -->
-<!--  # is.na(small_fdrPheno_2) -->
-<!--  # -->
-<!--   cor.test(small_fdrPheno$adj_Delta_13C, small_fdrPheno$rSeedWeight) -->
-<!--  seedWeight_dC13 <- ggplot(small_fdrPheno, aes(x=adj_Delta_13C, y=rSeedWeight)) + geom_point(col="#b30000", size=1) + -->
-<!--     geom_smooth(aes(y=rSeedWeight, x=adj_Delta_13C),method="lm", col="#b30000", linewidth=.2) + -->
-<!--     theme(legend.position="none") + xlab("") +ylab("seed weight (g)") + -->
-<!--     #ylim(0, 0.07) + xlim(-1,-0.85)  + -->
-<!--    geom_text(x=-.9, y=0.05, label="r2 = -0.41, p < 8.2e-3", size=4) -->
-<!--     #geom_text(x=-32, y=0.05, label="r2 = -0.41, p < 8.2e-3", size=4) -->
-<!--  pdf(file="figs/test_pointsplot.pdf") -->
-<!--   plot_grid(seedWeight_dC13) -->
-<!--   dev.off() -->
-
-<!--   ## empty plot -->
-<!--   seedWeight_dC13_pointsonly <- ggplot(small_fdrPheno, aes(x=adj_Delta_13C, y=rSeedWeight)) + geom_point(col="#b30000", size=.6) + -->
-<!--     geom_smooth(aes(y=rSeedWeight, x=adj_Delta_13C),method="lm", col="#b30000", linewidth=.2) + -->
-<!--     theme(legend.position="none") + xlab("") +ylab("seed weight (g)") + -->
-<!--     #ylim(0, 0.07) + xlim(-1,-0.85)  + -->
-<!--     theme(legend.position = "none", -->
-<!--         panel.grid = element_blank(), -->
-<!--         axis.title = element_blank(), -->
-<!--         axis.text = element_blank(), -->
-<!--         axis.ticks = element_blank(), -->
-<!--         panel.background = element_blank()) + -->
-<!--       theme_void() + -->
-<!--       theme(legend.position = "none") -->
-<!--   seedWeight_dC13_pointsonly -->
-
-<!--   png(file="figs/CRSPR_seedWeight_dC13_pointsonly.png", units="in", res=10000, width = 2, height = 2.1, bg="white") -->
-<!--   seedWeight_dC13_pointsonly -->
-<!--   dev.off() -->
-
-<!--   cor.test(small_fdrPheno$adj_Delta_13C, small_fdrPheno$days_to_flowering) -->
-<!--   ft_dC13 <- ggplot(small_fdrPheno, aes(x=adj_Delta_13C, y=days_to_flowering)) + geom_point(col="black", size=1) + -->
-<!--     geom_smooth(aes(y=days_to_flowering, x=adj_Delta_13C),method="lm", col="black", linewidth=.2) + -->
-<!--     theme(legend.position="none") + xlab("") +ylab("flowering time (days)") + -->
-<!--     ylim(0, 220) + #xlim(-1,-0.83) + -->
-<!--     geom_text(x=-0.89, y=50, label="r2 = 0.39, p < 1.1e-2", size=4) -->
-<!--     #geom_text(x=-32.5, y=50, label="r2 = 0.39, p < 1.1e-2", size=4) -->
-<!--   ft_dC13 -->
-
-<!--   ### CRISPR lines FLC KO data -->
-<!--   #flc_droughtexp_data <- small_fdrPheno -->
-<!--   #saveRDS(flc_droughtexp_data, file="./data/flc_droughtexp_data.rda") -->
-<!--   flc_droughtexp_data <- readRDS(file="./data/flc_droughtexp_data.rda") -->
-
-<!--   dim(flc_droughtexp_data) -->
-<!--   ## load imputed mutant dC13 data -->
-<!--   imp_dC13 <- readRDS(file="./data/imputed_mutant_dC13.rda") -->
-<!--   dim(imp_dC13) -->
-
-<!--   dat <- merge(flc_droughtexp_data, by.x="id", imp_dC13, by.y="id", all.x=T) -->
-<!--   head(dat) -->
-
-<!--   ## get col-0 mean mutant d_C13 -->
-<!--   flcKo_dC13 <-  read.table(file="./LauraAnalysis/crispr/deltaC_extended_rep3.csv", sep=",", header=T) -->
-<!--   flcKo_dC13_col <- flcKo_dC13 %>% filter(type=="COL") -->
-
-<!--   dat$adj_mean_dC13KO <- dat$mean_dC13_ko/abs(mean(flcKo_dC13_col$deltaC_mean)) -->
-
-<!--   cor.test(dat$adj_mean_dC13KO, dat$rSeedWeight.x) -->
-<!--    CSRP_seedWeight_dC13 <- ggplot(dat, aes(x=adj_mean_dC13KO, y=rSeedWeight.x)) + geom_point(col="#41ab5d", size=1) + -->
-<!--     geom_smooth(aes(y=rSeedWeight.x, x=adj_mean_dC13KO),method="lm", col="#41ab5d", linewidth=.2) + -->
-<!--     theme(legend.position="none") + xlab("") +ylab("seed weight (g)") + -->
-<!--     ylim(0, 0.07) + xlim(-1,-0.85) + -->
-<!--     geom_text(x=-.9, y=0.02, label="r2 = 0.62, p < 4.0e-6", size=4) -->
-<!--   CSRP_seedWeight_dC13 -->
-
-<!--   cor.test(dat$adj_mean_dC13KO, dat$days_to_flowering.x) -->
-<!--   CSRP_ft_dC13 <- ggplot(dat, aes(x=adj_mean_dC13KO, y=days_to_flowering.x)) + geom_point(col="black", size=1) + -->
-<!--     geom_smooth(aes(y=days_to_flowering.x, x=adj_mean_dC13KO),method="lm", col="black", linewidth=.2) + -->
-<!--     theme(legend.position="none") + xlab("") +ylab("flowering time (days)") + -->
-<!--     ylim(0, 220) + xlim(-1,-0.85) + -->
-<!--     geom_text(x=-0.9, y=150, label="r2 = 0.45, p < 1.7e-3", size=4) -->
-<!--   CSRP_ft_dC13 -->
-
-
-<!--   big_CRSPR_plot <- plot_grid(seedWeight_dC13, ft_dC13, CSRP_seedWeight_dC13, CSRP_ft_dC13, nrow=2, ncol=2) -->
-<!--   big_CRSPR_plot -->
-
-<!--   pdf(file="./figs/Crispr_4plot.pdf") -->
-<!--   big_CRSPR_plot -->
-<!--   dev.off() -->
-
-<!--   png(file="./figs/Crispr_4plot.png") -->
-<!--   big_CRSPR_plot -->
-<!--   dev.off() -->
-
-<!--   saveRDS(big_CRSPR_plot, file="./figs/tmpobjects/big_CRSPR_plot.rda") -->
-
-<!-- }else{ -->
-<!--   big_CRSPR_plot <- readRDS(file="./figs/tmpobjects/big_CRSPR_plot.rda") -->
-<!--   big_CRSPR_plot -->
-<!-- } -->
-
-<!-- ``` -->
-
-<!-- #### KO delta_C13 data -->
-
-<!-- ```{r, echo=F, eval=T, message=F, warning=F, fig.width=8, fig.height=8, fig.cap="Delta_C13 correlations across mutants and wt from Uli, and raw and imputed Dittberner data."} -->
-<!-- RERUN=F -->
-<!-- if(RERUN){ -->
-
-<!--   flc_droughtexp_data <- readRDS(file="./data/flc_droughtexp_data.rda") -->
-<!--   dim(flc_droughtexp_data) -->
-<!--   hist(flc_droughtexp_data$days_to_flowering) -->
-
-<!--   ## Load Uli's data -->
-<!--   flcKo_dC13 <-  read.table(file="./LauraAnalysis/crispr/deltaC_extended_rep3.csv", sep=",", header=T) -->
-<!--   head(flcKo_dC13) -->
-<!--   dim(flcKo_dC13) -->
-
-<!--   flcKo_dC13_col <- flcKo_dC13 %>% filter(type=="COL") -->
-
-<!--   flcKo_dC13_mut <- flcKo_dC13 %>% filter(type=="mut") -->
-<!--   mean_dC13_ko <- c() -->
-<!--   for (k in unique(flcKo_dC13_mut$accession)){ -->
-<!--     tmp <- flcKo_dC13_mut[flcKo_dC13_mut$accession==k, ] -->
-<!--     mean_dC13_ko <- c(mean_dC13_ko, mean(tmp$deltaC_mean)) -->
-<!--   } -->
-<!--   dC13_mut <- data.frame(id = unique(flcKo_dC13_mut$accession), -->
-<!--                          mean_dC13_ko) -->
-<!--   dC13_mut$id <- gsub("ID", "", dC13_mut$id) -->
-<!--   dC13_mut$id[29] <- 7701  ## i THINK this one is 7701, but need to double check -->
-
-<!--   dC13_mut -->
-
-
-<!--   flcKo_dC13_wt <-flcKo_dC13 %>% filter(type=="WT") -->
-<!--   mean_dC13_wt <- c() -->
-<!--   for (k in unique(flcKo_dC13_wt$accession)){ -->
-<!--     tmp <- flcKo_dC13_wt[flcKo_dC13_wt$accession==k, ] -->
-<!--     mean_dC13_wt <- c(mean_dC13_wt, mean(tmp$deltaC_mean)) -->
-<!--   } -->
-<!--   dC13_wt <- data.frame(id = unique(flcKo_dC13_wt$accession), -->
-<!--                          mean_dC13_wt) -->
-<!--   dC13_wt$id <- gsub("ID", "", dC13_wt$id) -->
-<!--   dC13_wt -->
-
-<!--   ## how do Uli's ko and wt correlate? -->
-<!--   uli_dC13 <- merge(dC13_mut, dC13_wt, by="id") -->
-<!--   Uli_dC13_corplot <- ggplot(uli_dC13) + geom_point(aes(x=mean_dC13_wt, y=mean_dC13_ko)) + -->
-<!--     xlab("dC13 WT") + ylab("dC13 mut") + -->
-<!--     geom_smooth(method="lm", aes(x=mean_dC13_wt, y=mean_dC13_ko), col="black")+ -->
-<!--     geom_text(x=-30.4, y=-30, label="r2 = 0.77, p < 0.0002") -->
-<!--   Uli_dC13_corplot -->
-<!--   cor.test(uli_dC13$mean_dC13_ko, uli_dC13$mean_dC13_wt) -->
-
-<!--   ## how do Uli mutants correlate with raw dittberner? -->
-<!--   dittb_dC13_raw <- read.table(file="./data/atlas1001_phenotypes_matrix_MR.csv", -->
-<!--                            header = T, sep=",") -->
-<!--   dittb_dC13_raw <- dittb_dC13_raw %>% select(id, Delta_13C) -->
-<!--   head(dittb_dC13_raw) -->
-<!--   dittb_dC13_raw %>%  filter(id==6909) -->
-
-<!--   dittb_raw_Uli_mut <- merge(dittb_dC13_raw, dC13_mut, by="id") -->
-<!--   ditRaw_Uli_dC13_mut_corplot <- ggplot(dittb_raw_Uli_mut) + -->
-<!--     geom_point(aes(x=Delta_13C, y=mean_dC13_ko)) + -->
-<!--     xlab("dC13 Dittberner raw") + ylab("dC13 mut") + -->
-<!--     geom_smooth(method="lm", aes(x=Delta_13C, y=mean_dC13_ko), col="black")+ -->
-<!--     geom_text(x=-35, y=-29.5, label="r2 = 0.89, p < 0.007") -->
-<!--   ditRaw_Uli_dC13_mut_corplot -->
-<!--   cor.test(dittb_raw_Uli_mut$Delta_13C, dittb_raw_Uli_mut$mean_dC13_ko) -->
-
-<!--   ## how do Uli wt correlate with raw dittberner? -->
-<!--   dittb_raw_Uli_wt <- merge(dittb_dC13_raw, dC13_wt, by="id") -->
-<!--   ditRaw_Uli_dC13_wt_corplot <- ggplot(dittb_raw_Uli_wt) + -->
-<!--     geom_point(aes(x=Delta_13C, y=mean_dC13_wt)) + -->
-<!--     xlab("dC13 Dittberner raw") + ylab("dC13 WT") + -->
-<!--     geom_smooth(method="lm", aes(x=Delta_13C, y=mean_dC13_wt), col="black")+ -->
-<!--     geom_text(x=-34, y=-29, label="r2 = 0.69, p < 0.2") -->
-<!--   ditRaw_Uli_dC13_wt_corplot -->
-<!--   cor.test(dittb_raw_Uli_wt$Delta_13C, dittb_raw_Uli_wt$mean_dC13_wt) -->
-
-
-<!--   ## how do Uli mutants correlate with imputed data -->
-<!--   dittb_dC13_imp <- read.table(file="./data/atlas1001_phenotype_matrix_imputed_onlypheno_NEW.csv", -->
-<!--                            header = T, sep=" ") -->
-<!--   dittb_dC13_imp <- dittb_dC13_imp %>% select(id, Delta_13C) -->
-<!--   dittb_imp_Uli_mut <- merge(dittb_dC13_imp, dC13_mut, by="id") -->
-
-<!--   dittb_imp_Uli_mut_corplot <- ggplot(dittb_imp_Uli_mut) + -->
-<!--     geom_point(aes(x=Delta_13C, y=mean_dC13_ko)) + -->
-<!--     xlab("dC13 Dittberner imputed") + ylab("dC13 mut") + -->
-<!--     geom_smooth(method="lm", aes(x=Delta_13C, y=mean_dC13_ko), col="black")+ -->
-<!--     geom_text(x=-35, y=-29.5, label="r2 = 0.71, p < 1.5e-5") -->
-<!--   dittb_imp_Uli_mut_corplot -->
-<!--   cor.test(dittb_imp_Uli_mut$Delta_13C, dittb_imp_Uli_mut$mean_dC13_ko) -->
-
-<!--   dC13_corplots <- plot_grid(Uli_dC13_corplot, ditRaw_Uli_dC13_mut_corplot, -->
-<!--                              ditRaw_Uli_dC13_wt_corplot, dittb_imp_Uli_mut_corplot, -->
-<!--                              nrow=2, ncol=2) -->
-<!--   saveRDS(dC13_corplots, file="./figs/tmpobjects/mut_wt_dC13_corplots.rda") -->
-
-
-<!--   dim(dittb_dC13_raw) -->
-<!--   dittb_dC13_raw <- na.omit(dittb_dC13_raw) -->
-
-<!--   dittb_raw_Uli_mut <- merge(dittb_dC13_raw, dC13_mut, by="id", all.x=T, all.y=T) -->
-
-<!--   dittb_raw_Uli_mut <- merge(dittb_raw_Uli_mut, flc_droughtexp_data, by="id",all.x=T, all.y=T) -->
-<!--   head(dittb_raw_Uli_mut) -->
-<!--   dim(dittb_raw_Uli_mut) -->
-<!--   dittb_raw_Uli_mut<-dittb_raw_Uli_mut[,-7] -->
-
-<!--   ## Impute missing mutant dC13 data using raw dittberner data and mutant ft and days to wilting -->
-<!--   require(missForest) -->
-<!--   ## with seed weight -->
-<!--   dimp_withSeed <- missForest(dittb_raw_Uli_mut[,-1], variablewise=T) -->
-<!--   id <- dittb_raw_Uli_mut[,1] -->
-<!--   imp_dC13_withSeeds <- cbind(id, dimp_withSeed$ximp) -->
-
-<!--   ## without seed weight -->
-<!--   dimp_woSeed <- missForest(dittb_raw_Uli_mut[,-c(1,6)], variablewise=T) -->
-<!--   id <- dittb_raw_Uli_mut[,1] -->
-<!--   imp_dC13 <- cbind(id, dimp_woSeed$ximp) -->
-
-<!--   cor.test(imp_dC13$Delta_13C.x, imp_dC13$mean_dC13_ko) -->
-<!--   ## correlation is 0.93, p<2.2-16 -->
-<!--   imputed_dC13_plot<- ggplot(imp_dC13) + geom_point(aes(x=Delta_13C.x, y=mean_dC13_ko)) + -->
-<!--     ylab("dC13 mut imputed") + xlab("dC13 dittberner") + -->
-<!--     geom_smooth(method="lm", aes(x=Delta_13C.x, y=mean_dC13_ko), col="black") + -->
-<!--     geom_text(x=-35.8, y=-29.5, label="r2 = 0.87, p < 2.2-16") -->
-
-<!--   saveRDS(imp_dC13_withSeeds, file="./data/imputed_mutant_dC13_withSeeds.rda") -->
-<!--   saveRDS(imp_dC13, file="./data/imputed_mutant_dC13.rda") -->
-
-<!--   dC13_corplots <- plot_grid(Uli_dC13_corplot, ditRaw_Uli_dC13_mut_corplot, -->
-<!--                              ditRaw_Uli_dC13_wt_corplot, dittb_imp_Uli_mut_corplot, -->
-<!--                              imputed_dC13_plot, nrow=3, ncol=2) -->
-<!--   saveRDS(dC13_corplots, file="./figs/tmpobjects/mut_wt_dC13_corplots.rda") -->
-
-
-<!-- }else{ -->
-<!--   dC13_corplots <- readRDS(file="./figs/tmpobjects/mut_wt_dC13_corplots.rda") -->
-<!--   dC13_corplots -->
-<!-- } -->
-
-<!-- ``` -->
-
-<!-- #### GWA with knock-out dC13 data -->
-
-<!-- ```{r, echo=F, eval=T, message=F, warning=F, fig.width=8, fig.height=8, fig.cap="Delta_C13 correlations across mutants and wt from Uli, and raw and imputed Dittberner data."} -->
-<!-- RERUN=F -->
-<!-- if(RERUN){ -->
-<!--   imp_dC13 <- readRDS(file="./data/imputed_mutant_dC13.rda") -->
-<!--   head(imp_dC13) -->
-<!--   dim(imp_dC13) -->
-
-<!--   ###imp_dC13_withSeeds <- readRDS( file="./data/imputed_mutant_dC13_withSeeds.rda") -->
-
-<!--   ## load lines used in drought exp. to filter to them only -->
-<!--   flc_droughtexp_data <- readRDS(file="./data/flc_droughtexp_data.rda") -->
-<!--   head(flc_droughtexp_data) -->
-
-<!--   imp_dC13 <- merge(flc_droughtexp_data, by.x="id", imp_dC13, by.y="id") -->
-<!--   imp_dC13 <- imp_dC13[,c(1,4, 7,8)] -->
-<!--   head(imp_dC13) -->
-
-<!--   fam <- read.table(file="./phenotypes/Meaux_Dittberner_MolEcol_2018_PID_30118161/1001/Delta_13C/1001gbi.fam") -->
-<!--   head(fam) -->
-<!--   new_fam <- merge(fam, by.x="V1", imp_dC13, by.y="id", all.x=T) -->
-<!--   head(new_fam) -->
-
-<!--   new_fam <- new_fam[,c(1,2,3,4,5,7,8,9)] -->
-<!--   new_fam$rSeedWeight[is.na(new_fam$rSeedWeight)] <- -9 -->
-<!--   new_fam$mean_dC13_ko[is.na(new_fam$mean_dC13_ko)] <- -9 -->
-<!--   new_fam$days_to_flowering.y[is.na(new_fam$days_to_flowering.y)] <- -9 -->
-<!--   head(new_fam) -->
-<!--   write.table(new_fam, file="./FLC_koData/1001gbi.fam", quote = F, col.names = F, row.names = F) -->
-
-<!--   #system(paste('ln -f ../1001g/1001gbi.bim ', paste0('./FLC_koData/','1001gbi.bim'))) -->
-<!--   #system(paste('ln -f ../1001g/1001gbi.bed ', paste0('./FLC_koData/', '1001gbi.bed'))) -->
-<!--   #system(paste('ln -f ../1001g/1001gbi.sXX.txt ', paste0('./FLC_koData/','1001gbi.sXX.txt'))) -->
-
-<!--   ## change output file and -n to change phenotype - either mutatnt dC13 or mutant seed weights -->
-<!--   setwd("~/safedata/natvar/") -->
-<!--   write.table(quote=F,row.names=F,col.names=F, -->
-<!--                    file="./FLC_koData/rungwa.sh", -->
-<!--                    x=rbind( -->
-<!--                      "#!/bin/bash", -->
-<!--                      "#SBATCH --cpus-per-task=2", -->
-<!--                      "#SBATCH --mem-per-cpu=4G", -->
-<!--                      "#SBATCH --partition=DPB", -->
-<!--                      "#SBATCH --job-name=rSeedWeight", -->
-<!--                      "#SBATCH --output=rSeedWeight.slurm.log", -->
-<!--                      "./gemma -bfile 1001gbi -miss 0.1 -maf 0.05 -r2 1 -k 1001gbi.sXX.txt -lmm 4 -n 1 -o rSeedWeight") -->
-<!--                    ) -->
-<!--   setwd("./FLC_koData/") -->
-<!--   system("sbatch rungwa.sh") -->
-
-<!--   ### also run gwa using imputed Seeds weights to get estimates of selection on alleles, just change some of the code above a little -->
-
-<!--   ########################################################## -->
-<!--   ### GWAS results plotting -->
-<!--   ########################################################## -->
-<!--   library(ggman) -->
-<!--   setwd("~/safedata/natvar/") -->
-<!--   tmp1<-data.table::fread(file="./FLC_koData/output/mutdC13_ft.assoc.txt") %>% select(chr,ps, rs, af, beta_1, beta_2, p_score) -->
-<!--   #tmp1<-data.table::fread(file="./FLC_koData/output/mutdC13_ft.assoc.txt") %>% select(chr,ps, rs, af, beta_1, beta_2, p_score) -->
-<!--   head(tmp1) -->
-
-<!--   ### plot the alleles by the color of selection -->
-
-<!--   ## SEED WEIGHT -->
-<!--   seedWeight <- data.table::fread(file="./FLC_koData/output/rSeedWeight.assoc.txt") %>% select(chr,ps, rs,af, beta, se, p_score) -->
-<!--   head(seedWeight) -->
-
-<!--   tmp1_seedWeight <- merge(tmp1, seedWeight, by="rs") -->
-<!--   head(tmp1_seedWeight) -->
-<!--   tmp1_seedWeight$col_fit <- rep(1, nrow(tmp1_seedWeight)) -->
-<!--   tmp1_seedWeight$col_fit[tmp1_seedWeight$beta <= 0] <- 0 -->
-
-<!--   thresh <- -log10(0.05/nrow(tmp1_seedWeight)) -->
-<!--   # nrow(tmp1_seedWeight)- 820884 -->
-<!--   # #thresh <- -log10(0.05/11379) -->
-<!--   # thresh <- -log10(0.05/15510) -->
-
-<!--   dim(tmp1_seedWeight) -->
-<!--   summary(tmp1_seedWeight$se) -->
-<!--   #tmp1_seedWeight <- tmp1_seedWeight %>% filter(se < 0.003) -->
-<!--   tmp1_seedWeight$chr_col <- rep(2, nrow(tmp1_seedWeight)) -->
-<!--   tmp1_seedWeight$chr_col[tmp1_seedWeight$chr.x==2|tmp1_seedWeight$chr.x==4] <- 3 -->
-<!--   tmp1_seedWeight$chr_col[-log10(tmp1_seedWeight$p_score.x)>5.8] <-    tmp1_seedWeight$col_fit[-log10(tmp1_seedWeight$p_score.x)>5.8] -->
-
-<!--   ## colored plots, how to change colors?? -->
-<!--   dC13mut_ft_SeedWeight_GWAplot <- ggman(tmp1_seedWeight, snp = "rs", bp = "ps.x", chrom = "chr.x", pvalue = "p_score.x", relative.positions = T, sigLine = thresh, title="") + -->
-<!--     geom_point(aes(color=as.factor(chr_col))) + ylim(2, 8) + -->
-<!--      #scale_color_manual(values=c("1"="#78c679", "0" = "#bd0026")) + -->
-<!--      scale_color_manual(values=c("1"="#78c679", "0" = "#bd0026", "2"="#636363", "3"="#bdbdbd")) -->
-<!--   dC13mut_ft_SeedWeight_GWAplot -->
-
-<!--   pdf(file="./figs/dC13mut_ft_SeedWeight_GWAplot.pdf", width=9, height=3) -->
-<!--   dC13mut_ft_SeedWeight_GWAplot -->
-<!--   dev.off() -->
-
-
-<!--    ## points only plot -->
-<!--    dC13mut_ft_SeedWeight_GWAplot_onlypoints <- ggman(tmp1_seedWeight, snp = "rs", bp = "ps.x", chrom = "chr.x", pvalue = "p_score.x", relative.positions = T, sigLine = thresh, title="") + -->
-<!--     geom_point(aes(color=as.factor(chr_col), size=as.factor(chr_col))) + ylim(2, 8) + -->
-<!--      #scale_color_manual(values=c("1"="#78c679", "0" = "#bd0026")) + -->
-<!--      scale_color_manual(values=c("1"="#78c679", "0" = "#bd0026", "2"="#636363", "3"="#bdbdbd")) + -->
-<!--         scale_size_manual(values=c("1"=2, "0" = 2, "2"=0.75, "3"=0.75))+ -->
-<!--        theme(legend.position = "none", -->
-<!--         panel.grid = element_blank(), -->
-<!--         axis.title = element_blank(), -->
-<!--         axis.text = element_blank(), -->
-<!--         axis.ticks = element_blank(), -->
-<!--         panel.background = element_blank()) + -->
-<!--       theme_void() + -->
-<!--       theme(legend.position = "none") -->
-<!--    dC13mut_ft_SeedWeight_GWAplot_onlypoints -->
-
-<!--   png(file="./figs/dC13mut_ft_SeedWeight_GWAplot_onlypoints.png", units="in",res=2400, width = 9, height = 3, bg="transparent") -->
-<!--   dC13mut_ft_SeedWeight_GWAplot_onlypoints -->
-<!--   dev.off() -->
-
-
-<!--   #saveRDS(dC13mut_SeedWeight_GWAplot, file="./figs/tmpobjects/dC13mut_SeedWeight_GWAplot.rda") -->
-
-<!--   saveRDS(dC13mut_ft_SeedWeight_GWAplot, file="./figs/tmpobjects/dC13mut_ft_SeedWeight_GWAplot.rda") -->
-
-<!--   pdf(file="./figs/dC13mut_ft_SeedWeight_GWAplot.pdf", width=9, height=3) -->
-<!--   dC13mut_ft_SeedWeight_GWAplot -->
-<!--   dev.off() -->
-
-<!--   getwd() -->
-<!--   png(file="./figs/dC13mut_ft_SeedWeight_GWAplot_thinned.png", units="in",res=72, width = 12, height = 6, bg="transparent") -->
-<!--   dC13mut_ft_SeedWeight_GWAplot -->
-<!--   dev.off() -->
-
-<!--   pdf(file="./figs/dC13mut_ft_SeedWeight_GWAplot.rda.pdf") -->
-<!--   dC13mut_ft_SeedWeight_GWAplot -->
-<!--   dev.off() -->
-
-<!--   getwd() -->
-<!--   png(file="./figs/dC13mut_ft_SeedWeight_GWAplot.rda.png", units="in",res=72, width = 12, height = 6, bg="transparent") -->
-<!--   dC13mut_ft_SeedWeight_GWAplot -->
-<!--   dev.off() -->
-
-
-
-<!-- }else{ -->
-<!--  dC13mut_SeedWeight_GWAplot <- readRDS(file="./figs/tmpobjects/dC13mut_SeedWeight_GWAplot.rda") -->
-<!--   dC13mut_SeedWeight_GWAplot -->
-<!-- } -->
-<!-- ``` -->
+################################################################################
+# V. Breaking the Link with CRSPR
+################################################################################
+
+## Impute delta_C13
+
+```{r, echo=F, eval=T, message=F, warning=F,}
+RERUN=F
+if(RERUN){
+  
+  # Uli data
+  flcKo_dC13 <-  read.table(file="./Data_code_Ruffley_Lutz_et_al/deltaC_extended_group_rep3.csv", sep=",", header=T)
+  head(flcKo_dC13)
+  
+  ##imputed elswhere
+  
+  
+  
+  
+}else{
+  
+}
+
+```
+
+
+
+
+
+
+```{r, echo=F, eval=F, message=F, warning=F, fig.cap="", fig.width=8, fig.height=8, fig.cap="Selection once genetic correlation has been altered by CRISPR editing."}
+RERUN=F
+if(RERUN){
+
+  setwd("~/safedata/natvar/")
+  
+  ## drought exp. data
+  seedweights<-read.csv("./LauraAnalysis/field_prep_year1/crispr/growth chamber/seed_weights.csv")
+  head(seedweights)
+
+  pheno<-read.csv("./LauraAnalysis/field_prep_year1/crispr/growth chamber/wrangled_data_crispr.csv")
+  head(pheno)
+
+  pheno<-merge(pheno,seedweights, by="NEW_ID") #deletes one individual... look into later
+  pheno$weight_w_paper<-as.numeric(pheno$weight_w_paper)
+
+  pheno$rSeedWeight <- pheno$weight_w_paper - 0.3992667
+  mean(pheno$rSeedWeight, na.rm=T)
+  hist(pheno$rSeedWeight)
+  head(pheno)
+  dim(pheno)
+
+  #pheno$founder<-fn(pheno$founder)
+  pheno$founder <- as.character(pheno$founder)
+  pheno$founder[pheno$founder==""] <- "c"
+  head(pheno)
+
+  ### Look at natural ecotypes first
+  founder_pheno <- pheno %>% filter(founder =="f")
+  dim(founder_pheno)
+  founder_pheno <- founder_pheno %>% filter(drought =="optimal")
+  dim(founder_pheno)
+
+  small_fdrPheno <- founder_pheno[, c("real_id", "days_to_flowering", "days_to_wilting", "rSeedWeight")]
+  #small_fdrPheno <- na.omit(small_fdrPheno)
+ uniq_ids <- unique(small_fdrPheno$real_id)
+ 
+ 
+ days_to_flowering <- c()
+ days_to_wilting <- c()
+ rSeedWeight <- c()
+ reps <- c()
+ id <- uniq_ids[1]
+ for (id in uniq_ids){
+   tmp <- small_fdrPheno[small_fdrPheno$real_id==id,]
+   reps <- nrow(tmp)
+   days_to_flowering <- c(days_to_flowering, mean(tmp$days_to_flowering, na.rm=T))
+   days_to_wilting <- c(days_to_wilting, mean(tmp$days_to_wilting, na.rm=T))
+   rSeedWeight <- c(rSeedWeight, mean(tmp$rSeedWeight, na.rm=T))
+ }
+ small_fdrPheno <- data.frame(id=uniq_ids, reps=reps,
+                              days_to_flowering, days_to_wilting, rSeedWeight)
+
+ 
+
+
+  ## Load Dittberner imputed data
+  dittb_dC13 <- read.table(file="./data/atlas1001_phenotype_matrix_imputed_withID.csv",
+                           header = T, sep=" ")
+  dittb_dC13 <- dittb_dC13 %>% select(id, Delta_13C)
+
+  sum(dittb_dC13$id %in% unique(founder_pheno$real_id))
+  small_fdrPheno <- merge(small_fdrPheno, by.x="id", dittb_dC13, by.y="id")
+  dim(small_fdrPheno)
+  ## adjust all Delta_C13 values by col-0 value; except Col-0 not used in dittberner, so use a close-by central Germany accession
+  small_fdrPheno$adj_Delta_13C <- small_fdrPheno$Delta_13C/abs(-37.21)
+  head(small_fdrPheno)
+
+  ### plots
+ # small_fdrPheno<- small_fdrPheno[!is.na(small_fdrPheno$rSeedWeight), ]
+ # small_fdrPheno_2 <- small_fdrPheno[, c("rSeedWeight", "Delta_13C")]
+ # is.na(small_fdrPheno_2)
+ #
+  cor.test(small_fdrPheno$adj_Delta_13C, small_fdrPheno$rSeedWeight)
+  cor.test(small_fdrPheno$adj_Delta_13C, small_fdrPheno$days_to_flowering)
+  cor.test(small_fdrPheno$rSeedWeight, small_fdrPheno$days_to_flowering)
+  
+  ggplot(small_fdrPheno, aes(y=days_to_flowering, x=adj_Delta_13C, color = rSeedWeight)) +
+    geom_point(aes(size = rSeedWeight)) +
+      scale_color_distiller(name = "rSeedWeight", 
+                        palette = "RdYlGn", 
+                        direction = 1, 
+                        limits = c(0.007, 0.066))
+  
+  hist(na.omit(rSeedWeight))
+  
+  range(dat$rSeedWeight)
+  ggplot(dat, aes(y=days_to_flowering.x, x=adj_mean_dC13KO, color = rSeedWeight)) +
+    geom_point(aes(size = rSeedWeight)) +
+      scale_color_distiller(name = "rSeedWeight", 
+                        palette = "RdYlGn", 
+                        direction = 1, 
+                        limits = c(0.003, 0.061))
+  
+  small_fdrPheno$group <- rep("wt", nrow(small_fdrPheno))
+  dat$group <- rep("mutant", nrow(small_fdrPheno))
+  
+  df <- data.frame(id = c(small_fdrPheno$id, dat$id),
+                   ft = c(small_fdrPheno$days_to_flowering, dat$days_to_flowering.x),
+                   seed = c(small_fdrPheno$rSeedWeight, dat$rSeedWeight),
+                   wue = c(small_fdrPheno$adj_Delta_13C, dat$adj_mean_dC13KO),
+                   group = c(small_fdrPheno$group, dat$group))
+  
+  ggplot(df, aes(y=ft, x=wue, color=seed, size=seed)) +
+    geom_point(aes(pch=group), alpha=0.7) +
+    scale_color_distiller(name = "rSeedWeight", 
+                        palette = "RdYlGn", 
+                        direction = 1)+
+    scale_shape_manual(values = c(18,16)) + xlim(-1.02, -0.90)+
+    geom_smooth(data = subset(df, group == "wt"), aes(group = group), method = "lm", se = T, color = "gray70", linetype = "dashed", size = 0.5, alpha=0.1) +
+  geom_smooth(data = subset(df, group == "mutant"), aes(group = group), method = "lm", se = T, color = "gray70", linetype = "dashed", size = 0.5, alpha=0.1)
+  
+  
+  wilcox_test_result <- wilcox.test(small_fdrPheno$rSeedWeight, dat$rSeedWeight)
+    wilcox_test_result <- wilcox.test(small_fdrPheno$days_to_flowering, dat$days_to_flowering.x)
+    wilcox_test_result <- wilcox.test(small_fdrPheno$adj_Delta_13C, dat$adj_mean_dC13KO)
+  df$group <- factor(df$group, levels = c("wt", "mutant"))
+g1 <- ggplot(df, aes(x = group, y = wue, fill = group)) +
+  geom_violin(trim = F, width = 0.5, adjust = 3) +  # Adjusting parameters for smoother violins
+  geom_jitter(width = 0.1, alpha = 0.5) +
+  scale_fill_manual(values = c("#66c2a5", "#bf812d")) +  # Custom fill colors for the groups
+  theme_minimal()
+g1
+  g2 <- ggplot(df, aes(x = group, y = ft, fill = group)) +
+  geom_violin(trim = F, width = 0.5, adjust = 3)+
+  geom_jitter(width = 0.1, alpha = 0.5) +
+  scale_fill_manual(values = c("#66c2a5", "#bf812d")) +  # Custom fill colors for the groups
+  theme_minimal()
+  
+  plot_grid(g1,g2)
+  
+ seedWeight_dC13 <- ggplot(small_fdrPheno, aes(x=adj_Delta_13C, y=rSeedWeight)) + geom_point(col="#b30000", size=1) +
+    geom_smooth(aes(y=rSeedWeight, x=adj_Delta_13C),method="lm", col="#b30000", linewidth=.2) +
+    theme(legend.position="none") + xlab("") +ylab("seed weight (g)") +
+    #ylim(0, 0.07) + xlim(-1,-0.85)  +
+   geom_text(x=-.9, y=0.05, label="r2 = -0.41, p < 8.2e-3", size=4)
+    #geom_text(x=-32, y=0.05, label="r2 = -0.41, p < 8.2e-3", size=4)
+ pdf(file="figs/test_pointsplot.pdf")
+  plot_grid(seedWeight_dC13)
+  dev.off()
+
+  ## empty plot
+  seedWeight_dC13_pointsonly <- ggplot(small_fdrPheno, aes(x=adj_Delta_13C, y=rSeedWeight)) + geom_point(col="#b30000", size=.6) +
+    geom_smooth(aes(y=rSeedWeight, x=adj_Delta_13C),method="lm", col="#b30000", linewidth=.2) +
+    theme(legend.position="none") + xlab("") +ylab("seed weight (g)") +
+    #ylim(0, 0.07) + xlim(-1,-0.85)  +
+    theme(legend.position = "none",
+        panel.grid = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.background = element_blank()) +
+      theme_void() +
+      theme(legend.position = "none")
+  seedWeight_dC13_pointsonly
+
+  png(file="figs/CRSPR_seedWeight_dC13_pointsonly.png", units="in", res=10000, width = 2, height = 2.1, bg="white")
+  seedWeight_dC13_pointsonly
+  dev.off()
+
+  cor.test(small_fdrPheno$adj_Delta_13C, small_fdrPheno$days_to_flowering)
+  ft_dC13 <- ggplot(small_fdrPheno, aes(x=adj_Delta_13C, y=days_to_flowering)) + geom_point(col="black", size=1) +
+    geom_smooth(aes(y=days_to_flowering, x=adj_Delta_13C),method="lm", col="black", linewidth=.2) +
+    theme(legend.position="none") + xlab("") +ylab("flowering time (days)") +
+    ylim(0, 220) + #xlim(-1,-0.83) +
+    geom_text(x=-0.89, y=50, label="r2 = 0.39, p < 1.1e-2", size=4)
+    #geom_text(x=-32.5, y=50, label="r2 = 0.39, p < 1.1e-2", size=4)
+  ft_dC13
+
+  saveRDS(small_fdrPheno, file="./data/fdr_growthchamber_exp.rda")
+  ### CRISPR lines FLC KO data
+  #flc_droughtexp_data <- small_fdrPheno
+  #saveRDS(flc_droughtexp_data, file="./data/flc_droughtexp_data.rda")
+  flc_droughtexp_data <- readRDS(file="./data/flc_droughtexp_data.rda")
+
+  head(flc_droughtexp_data)
+  ## load imputed mutant dC13 data
+  imp_dC13 <- readRDS(file="./data/imputed_mutant_dC13.rda")
+  dim(imp_dC13)
+
+  dat <- merge(flc_droughtexp_data, by.x="id", imp_dC13, by.y="id", all.x=T)
+  head(dat)
+
+  ## get col-0 mean mutant d_C13
+  flcKo_dC13 <-  read.table(file="./Data_code_Ruffley_Lutz_et_al/deltaC_extended_group_rep3.csv", sep=",", header=T)
+  flcKo_dC13_col <- flcKo_dC13 %>% filter(line=="COL")
+flcKo_dC13_col$deltaC_mean_mean
+  dat$adj_mean_dC13KO <- dat$mean_dC13_ko/abs(mean(flcKo_dC13_col$deltaC_mean_mean))
+
+  cor.test(dat$adj_mean_dC13KO, dat$rSeedWeight)
+   CSRP_seedWeight_dC13 <- ggplot(dat, aes(x=adj_mean_dC13KO, y=rSeedWeight.x)) + geom_point(col="#41ab5d", size=1) +
+    geom_smooth(aes(y=rSeedWeight.x, x=adj_mean_dC13KO),method="lm", col="#41ab5d", linewidth=.2) +
+    theme(legend.position="none") + xlab("") +ylab("seed weight (g)") +
+    ylim(0, 0.07) + xlim(-1,-0.85) +
+    geom_text(x=-.9, y=0.02, label="r2 = 0.62, p < 4.0e-6", size=4)
+  CSRP_seedWeight_dC13
+
+  cor.test(dat$adj_mean_dC13KO, dat$days_to_flowering.x)
+  CSRP_ft_dC13 <- ggplot(dat, aes(x=adj_mean_dC13KO, y=days_to_flowering.x)) + geom_point(col="black", size=1) +
+    geom_smooth(aes(y=days_to_flowering.x, x=adj_mean_dC13KO),method="lm", col="black", linewidth=.2) +
+    theme(legend.position="none") + xlab("") +ylab("flowering time (days)") +
+    ylim(0, 220) + xlim(-1,-0.85) +
+    geom_text(x=-0.9, y=150, label="r2 = 0.45, p < 1.7e-3", size=4)
+  CSRP_ft_dC13
+
+
+  big_CRSPR_plot <- plot_grid(seedWeight_dC13, ft_dC13, CSRP_seedWeight_dC13, CSRP_ft_dC13, nrow=2, ncol=2)
+  big_CRSPR_plot
+
+  pdf(file="./figs/Crispr_4plot.pdf")
+  big_CRSPR_plot
+  dev.off()
+
+  png(file="./figs/Crispr_4plot.png")
+  big_CRSPR_plot
+  dev.off()
+
+  saveRDS(big_CRSPR_plot, file="./figs/tmpobjects/big_CRSPR_plot.rda")
+
+}else{
+  big_CRSPR_plot <- readRDS(file="./figs/tmpobjects/big_CRSPR_plot.rda")
+  big_CRSPR_plot
+}
+
+```
+
+#### WT/CRSIPR Scatter Plots
+
+```{r, echo=F, eval=F}
+
+setwd("./safedata/natvar")
+
+  ## Laura and CLara GC exp. data
+  gc_exp_dat <-read.csv("./LauraAnalysis/field_prep_year1/crispr/growth chamber/wrangled_data_crispr.csv")
+  head(gc_exp_dat)
+  ## fitness from GC exp. 
+  seedweights<-read.csv("./LauraAnalysis/field_prep_year1/crispr/growth chamber/seed_weights.csv")
+  head(seedweights)
+
+  ## merger exp. trait data with fitness
+  df<-merge(gc_exp_dat,seedweights, by="NEW_ID") #deletes one individual... look into later
+  
+
+    df$weight_w_paper<-as.numeric(df$weight_w_paper)
+    df$rSeedWeight <- df$weight_w_paper - 0.3992667
+    df$founder <- as.character(df$founder)
+    df$founder[df$founder==""] <- "c"
+    
+    wt <- df %>% filter(founder =="f")
+    mutant <- df %>% filter(founder=="c")
+
+    wt_opt <- wt %>% filter(drought=="optimal")
+    #wt_late <- wt %>% filter(drought=="late") ## almost all NAs
+    #wt_early <- wt %>% filter(drought=="early") ## almost all NAs
+    mutant_opt <- mutant %>% filter(drought=="optimal")
+    mutant_late <- mutant %>% filter(drought=="late")
+    mutant_early <- mutant %>% filter(drought=="early")
+    
+    #wt$group_id <- as.factor(paste(wt$real_id, wt$drought, sep = "_"))
+
+   wrangle_Expdata <- function(dat){   
+      uniq_ids <- unique(dat$real_id)
+      days_to_flowering <- c()
+      dtf_sd <- c()
+      days_to_wilting <- c()
+      rSeedWeight <- c()
+      sw_sd <- c()
+      reps <- c()
+      
+      for (id in uniq_ids){
+        tmp <- dat[dat$real_id==id,]
+        tmp <- tmp[!is.na(tmp$rSeedWeight),]
+        reps <- c(reps, nrow(tmp))
+        
+        if (nrow(tmp)==1){
+          days_to_flowering <- c(days_to_flowering, tmp$days_to_flowering)
+          dtf_sd <- c(dtf_sd, NA)
+          days_to_wilting <- c(days_to_wilting, tmp$days_to_wilting)
+          rSeedWeight <- c(rSeedWeight, tmp$rSeedWeight)
+          sw_sd <- c(sw_sd, NA)
+        }else{
+          days_to_flowering <- c(days_to_flowering, mean(tmp$days_to_flowering, na.rm=T))
+          dtf_sd <- c(dtf_sd, sd(tmp$days_to_flowering))
+          days_to_wilting <- c(days_to_wilting, mean(tmp$days_to_wilting, na.rm=T))
+          rSeedWeight <- c(rSeedWeight, mean(tmp$rSeedWeight, na.rm=T))
+          sw_sd <- c(sw_sd, sd(tmp$rSeedWeight))
+        }
+       }
+      output <- data.frame(id=uniq_ids, reps=reps,
+                             ft= days_to_flowering,ft_sd=dtf_sd, fit=rSeedWeight, sw_sd=sw_sd)
+    return(output)
+    }
+  
+ wt <- wrangle_Expdata(wt_opt)  
+ mutant_opt <-  wrangle_Expdata(mutant_opt) 
+ mutant_late <-  wrangle_Expdata(mutant_late) 
+ mutant_early <-  wrangle_Expdata(mutant_early) 
+
+ imp_dC13 <- readRDS(file="./data/imputed_mutant_dC13.rda")
+ head(imp_dC13)
+ dim(imp_dC13)
+ 
+ ## start with optimal bc the most survived
+ mutant_opt$group<- "mut"
+ wt$group <- "wt"
+ mutant_late$group <- "mut_late"
+ mutant_early$group <- "mut_early"
+ 
+ wt_dc13 <- merge(wt, by.x="id", imp_dC13[,c(1,2)], by.y="id", all.x=T )
+ mut_dc13 <- merge(mutant_opt, by.x="id", imp_dC13[,c(1,3)], by.y="id", all.x=T )
+ mut_late_dc13 <- merge(mutant_late, by.x="id", imp_dC13[,c(1,3)], by.y="id", all.x=T )
+ mut_early_dc13 <- merge(mutant_early, by.x="id", imp_dC13[,c(1,3)], by.y="id", all.x=T )
+ 
+ colnames(wt_dc13)[8] <- "wue"
+ colnames(mut_dc13)[8] <- "wue"
+ colnames(mut_late_dc13)[8] <- "wue"
+ colnames(mut_early_dc13)[8] <- "wue"
+ 
+ wt_dc13$adj_dc13 <-  wt_dc13$wue/abs(-37.21) ## close relative of col-0, a german wt accession
+ mut_dc13$adj_dc13 <- mut_dc13$wue/abs(-31.14) ## d_c13 of col-0 by Uli
+ mut_late_dc13$adj_dc13 <- mut_late_dc13$wue/abs(-31.14) ## d_c13 of col-0 by Uli
+ mut_early_dc13$adj_dc13 <- mut_early_dc13$wue/abs(-31.14) ## d_c13 of col-0 by Uli
+ 
+ dat<- rbind(wt_dc13, mut_dc13)
+ head(dat)
+ 
+ all_muts<-rbind(wt_dc13, mut_dc13, mut_late_dc13, mut_early_dc13)  
+ 
+
+ # ft_uli <-  read.table(file="./Data_code_Ruffley_Lutz_et_al/lines_info_annot.csv", sep=",", header=T) %>% select(mut_line_ID, FT16_1001)
+ # dat2 <- merge(dat, by.x="line", ft_uli, by.y="mut_line_ID")
+ # 
+ unique(dat$group)
+ normalize.<-function(x) (x-min(x,na.rm=T)) / (max(x,na.rm=T)-min(x,na.rm=T))
+ dat$norm_fit<- normalize.(dat$fit)
+ dat$group
+ 
+unique(all_muts$group)
+all_muts$norm_fit<- normalize.(all_muts$fit)
+
+library(randomForest)
+#wt_dc13[,c(3,4,5,6,8,9)] <- na.roughfix(wt_dc13[,c(3,4,5,6,8,9)])
+cor.test(wt_dc13$fit, wt_dc13$wue)
+cor.test(mut_dc13$fit, mut_dc13$adj_dc13)
+
+
+cor.test(mut_early_dc13$ft, mut_early_dc13$adj_dc13)
+cor.test(mut_late_dc13$ft, mut_late_dc13$adj_dc13)
+
+
+### look at all mutants (early, opt, and late drought) and wt
+ ft_wue_allTreatments_Plot <- ggplot(all_muts, aes(y=ft, x=adj_dc13, color=group)) +
+  geom_point(stroke=3, alpha=0.7, pch=16) + xlim(-1.03,-0.89) +
+   scale_size_continuous(range(0.5, 6)) +
+   #scale_fill_manual(values = c("wt"= "#4E9D79",  "mut"= "#CE6E2D", "mut_late"="#7f2704" , "mut_early"= "#fdae6b")) +
+   scale_color_manual(values = c("wt"= "#4E9D79",  "mut"= "#CE6E2D", "mut_late"="#7f2704" , "mut_early"= "#fdae6b")) +
+      theme(panel.grid.major = element_line(color = "gray90"),  # Light major gridlines
+        panel.grid.minor = element_blank()) +
+       geom_smooth(data = subset(all_muts, group == "wt"), aes(y=ft, x=adj_dc13,group = group),     method = "lm", se = T, color = "#4E9D79", linetype = "solid", size = 1, alpha=0.2,     inherit.aes = F) + 
+       geom_smooth(data = subset(all_muts, group == "mut"), aes(y=ft, x=adj_dc13,group = group),    method = "lm", se = T, color = "#CE6E2D", linetype = "solid", size = 1,alpha=0.2,     inherit.aes = F) +
+   geom_smooth(data = subset(all_muts, group == "mut_early"), aes(y=ft, x=adj_dc13,group = group),    method = "lm", se = T, color = "#fdae6b", linetype = "solid", size =1,alpha=0.2,     inherit.aes = F) +
+   geom_smooth(data = subset(all_muts, group == "mut_late"), aes(y=ft, x=adj_dc13,group = group),    method = "lm", se = T, color = "#7f2704", linetype = "solid", size = 1,alpha=0.2,     inherit.aes = F) 
+       # geom_errorbar(data = dat2, 
+       #          aes(x = adj_dc13, ymin = ft - ft_sd, ymax = ft + ft_sd, color=group), 
+       #          width = 0, 
+       #          inherit.aes = FALSE) 
+ ft_wue_allTreatments_Plot
+ ## leet's try keeping the color as in other plot, but now looking at relationship with fitness
+ pdf(file="./figs/ft_wue_allTreatments_Plot.pdf", height = 5.5, width = 7)
+  ft_wue_allTreatments_Plot
+  dev.off()
+ 
+  
+  
+  summary(lm(wt_dc13$fit~ wt_dc13$adj_dc13))
+cor.test(normalize.(mut_dc13$fit), mut_dc13$adj_dc13)
+
+  summary(lm(wt_dc13$fit~ wt_dc13$adj_dc13))
+  cor.test(wt_dc13$fit, wt_dc13$ft)
+  
+cor.test(normalize.(mut_dc13$fit), mut_dc13$ft)
+
+# cor.test(normalize.(mut_early_dc13$fit), mut_early_dc13$adj_dc13)
+# cor.test(normalize.(mut_late_dc13$fit), mut_late_dc13$adj_dc13)
+  
+all_mut_fitness_scatter_plot<- ggplot(all_muts, aes(y=norm_fit, x=adj_dc13, color=group)) +
+     geom_point(pch=16, size=3.5, alpha=0.65) +  # size=2.5, stroke=1
+    xlim(-1.03,-0.89) +
+    theme(panel.grid.major = element_line(color = "gray90"),  # Light major gridlines
+        panel.grid.minor = element_blank()) +
+    scale_color_manual(values = c("wt"= "#4E9D79",  "mut"= "#CE6E2D", "mut_late"="#7f2704" , "mut_early"= "#fdae6b")) +
+    geom_smooth(data = subset(all_muts, group == "wt"), aes(y=norm_fit, x=adj_dc13,group = group),     method = "lm", se = T, color = "#4E9D79", linetype = "solid", size = 1, alpha=0.2,     inherit.aes = F) + 
+       geom_smooth(data = subset(all_muts, group == "mut"), aes(y=norm_fit, x=adj_dc13,group = group),    method = "lm", se = T, color = "#CE6E2D", linetype = "solid", size = 1,alpha=0.2,     inherit.aes = F) +
+   geom_smooth(data = subset(all_muts, group == "mut_early"), aes(y=norm_fit, x=adj_dc13,group = group),    method = "lm", se = T, color = "#fdae6b", linetype = "solid", size =1,alpha=0.2,     inherit.aes = F) +
+   geom_smooth(data = subset(all_muts, group == "mut_late"), aes(y=norm_fit, x=adj_dc13,group = group),    method = "lm", se = T, color = "#7f2704", linetype = "solid", size = 1,alpha=0.2,     inherit.aes = F) 
+    all_mut_fitness_scatter_plot
+    
+  pdf(file="./figs/all_mut_fitness_scatter_plot.pdf", height = 4.5, width = 6)
+  all_mut_fitness_scatter_plot
+  dev.off()
+    
+   # geom_errorbar(data = all_muts, 
+   #              aes(x = adj_dc13, ymin = norm_fit - sw_sd, ymax = norm_fit + sw_sd, color=group), 
+   #              width = 0, 
+   #              inherit.aes = FALSE) 
+   # 
+  
+  
+  
+  
+ 
+ 
+ dat2 <- dat
+ fitness_scatter_plot<- ggplot(dat2, aes(y=norm_fit, x=adj_dc13, fill=group, color=group)) +
+     geom_point(pch=21, size=3, stroke=1) +  # size=2.5, stroke=1
+    xlim(-1.03,-0.89) +
+    theme(panel.grid.major = element_line(color = "gray90"),  # Light major gridlines
+        panel.grid.minor = element_blank()) +
+    scale_fill_manual(values = c("wt"= "#4E9D79",  "mut"= "#CE6E2D")) +
+    scale_color_manual(values = c("wt"= "#4E9D79",  "mut"= "#CE6E2D")) +
+    geom_smooth(data = subset(dat2, group == "wt"), aes(y=norm_fit, x=adj_dc13,group = group), method = "lm", se = T, color = "#4E9D79", linetype = "solid", size = 1, alpha=0.2, inherit.aes = F) + 
+   geom_smooth(data = subset(dat2, group == "mut"), aes(y=norm_fit, x=adj_dc13,group = group), method = "lm", se = T, color = "#CE6E2D", linetype = "solid", size = 1,alpha=0.2, inherit.aes = F) +
+   geom_errorbar(data = dat2, 
+                aes(x = adj_dc13, ymin = norm_fit - sw_sd, ymax = norm_fit + sw_sd, color=group), 
+                width = 0, 
+                inherit.aes = FALSE) 
+fitness_scatter_plot
+
+
+   fitness_scatter_plot
+  pdf(file="./figs/fitness_scatter_plot.pdf", height = 5.5, width = 7)
+  fitness_scatter_plot
+  dev.off()
+   
+   
+   
+  pdf(file="./figs/double_scatter_crisprexp.pdf", height = 8, width = 6)
+  plot_grid(scat_plot, fitness_scatter_plot, ncol=1)
+  dev.off()
+  
+   
+  head(dat2)
+   ft_scatter_plot<- ggplot(dat2, aes(y=ft, x=adj_dc13, fill=group, color=group)) +
+   geom_point(pch=21, size=3, stroke=1) +
+    xlim(-1.03,-0.89)+
+    theme(panel.grid.major = element_line(color = "gray90"),  # Light major gridlines
+        panel.grid.minor = element_blank()) +
+    scale_fill_manual(values = c("wt"= "#4E9D79",  "mut"= "#CE6E2D")) +
+    scale_color_manual(values = c("wt"= "#4E9D79",  "mut"= "#CE6E2D")) +
+    geom_smooth(data = subset(dat2, group == "wt"), aes(y=ft, x=adj_dc13,group = group), method = "lm", se = T, color = "#4E9D79", linetype = "solid", size = 1, alpha=0.2, inherit.aes = F) + 
+   geom_smooth(data = subset(dat2, group == "mut"), aes(y=ft, x=adj_dc13,group = group), method = "lm", se = T, color = "#CE6E2D", linetype = "solid", size = 1,alpha=0.2, inherit.aes = F) 
+   # geom_errorbar(data = dat2, 
+   #              aes(x = adj_dc13, ymin = ft - ft_sd, ymax = ft + ft_sd, color=group), 
+   #              width = 0,
+   #              inherit.aes = FALSE) 
+   
+   ft_scatter_plot
+   
+   dat2 <- dat
+     dat2$group <- factor(dat2$group, levels = c("wt", "mut"))
+  fitness_hist <- ggplot(dat2, aes(y = norm_fit, x=group, fill=group, alpha=0.8)) +
+   geom_violin(trim = F, width = 1, adjust = 3) +  # Adjusting parameters for smoother violins
+   geom_jitter(width = 0.2, alpha = 0.6) +
+   scale_fill_manual(values = c("wt"= "#4E9D79", "mut" = "#CE6E2D")) +
+   scale_color_manual(values = c("wt"= "#4E9D79", "mut" = "#CE6E2D")) 
+ fitness_hist
+  
+  pdf(file="./figs/fitness_hist_plot.pdf", height = 4.5, width = 3)
+ fitness_hist
+ dev.off()
+ 
+   
+   
+   pdf(file="./figs/ftVwue_scatter_crisprexp.pdf", height = 5.5, width = 7)
+   ft_scatter_plot
+   dev.off()
+  
+   pdf(file="./figs/4scatterplot_flc_plots.pdf", height = 9, width = 10.5)
+   plot_grid(ft_wue_fitnessAsPoints, fitness_scatter_plot, ft_scatter_plot, scat_plot)
+   dev.off()
+  
+####============================================###
+  
+ # Uli data
+ flcKo_dC13 <-  read.table(file="./Data_code_Ruffley_Lutz_et_al/deltaC_extended_group_rep3.csv", sep=",", header=T)
+ head(flcKo_dC13)
+
+ mutant_uli <- flcKo_dC13 %>% filter(startsWith(.[[1]], "ID"))
+ mutant_uli$group <- "mutant"
+ mutant_uli$group[mutant_uli$dag_mean<=18] <- "mt18"
+ wt_uli <-  flcKo_dC13 %>% filter(startsWith(.[[1]], "WT"))
+ wt_uli$group <- "wt"
+ wt_uli$group[wt_uli$dag_mean>102] <- "wt100"
+ wt_uli$border <- wt_uli$color
+ col_uli <- flcKo_dC13 %>% filter(line=="COL")
+ col_uli$group <- "col"
+ 
+ 
+ colors <- c("col" = "black","wt"= "#4E9D79", "wt100"= "#2DCECE", "mutant" = "#CE6E2D",  "mt18"= "#E5C71A")
+ borders <- c("col" = "black", "wt"= "#4E9D79", "wt100"= "#4E9D79", "mutant" = "#CE6E2D", "mt18"=  "#CE6E2D" )
+ 
+ dat <- rbind(mutant_uli, wt_uli, col_uli)
+ 
+ # ft_uli <-  read.table(file="./Data_code_Ruffley_Lutz_et_al/lines_info_annot.csv", sep=",", header=T) %>% select(mut_line_ID, FT16_1001)
+ # dat2 <- merge(dat, by.x="line", ft_uli, by.y="mut_line_ID")
+ # 
+ unique(dat$group)
+
+ ##scater plot
+ scat_plot <-ggplot(dat, aes(x=deltaC_mean_mean, y=dag_mean, fill=group, color=group)) +
+   geom_point(pch=21, size=3, stroke=1)+
+  scale_fill_manual(values = colors) +
+   scale_color_manual(values = borders) +
+   xlim(-32, -29) + ylim(0,150) +
+   theme(panel.grid.major = element_line(color = "gray90"),  # Light major gridlines
+        panel.grid.minor = element_blank()) + # No minor gridlines 
+ geom_smooth(data = subset(dat, group %in% c("wt", "col")), aes(x=deltaC_mean_mean, y=dag_mean),na.rm=T, method = "lm", se = T, color = "#4E9D79", linetype = "solid", size = 1, alpha=0.2, inherit.aes = F)+
+   geom_smooth(data = subset(dat, group %in% c("mutant", "mt18")), aes(x=deltaC_mean_mean, y=dag_mean),na.rm=T, method = "lm", se = T, color = "#CE6E2D", linetype = "solid", size = 1, alpha=0.2, inherit.aes = F) +
+   geom_errorbar(data = dat, 
+                aes(x = deltaC_mean_mean, ymin = dag_mean - dag_std, ymax = dag_mean + dag_std, color=group), 
+                width = 0, 
+                inherit.aes = FALSE) +
+    geom_errorbar(data = dat, 
+                aes(y = dag_mean, xmin = deltaC_mean_mean - deltaC_mean_std, xmax = deltaC_mean_mean + deltaC_mean_std, color=group), 
+                width = 0, 
+                inherit.aes = FALSE)
+ scat_plot
+ 
+ pdf(file="./figs/Uli-exp-dc13_ft_scatter_plot.pdf", height = 5.5, width = 7)
+ scat_plot
+ dev.off()
+ 
+ dat$label
+ dat_subwt <- subset(dat, group %in% c("wt", "col", "wt100"))
+ dat_subwt$id <- "W"
+ dat_subwt$adj_dc13 <-  dat_subwt$deltaC_mean_mean/abs(-37.21)
+ 
+ dat_submt <- subset(dat, group %in% c("mutant", "mt18"))
+ dat_submt$id <- "M"
+ dat_submt$adj_dc13 <-  dat_submt$deltaC_mean_mean/abs(-31.14)
+ 
+ dat_subwt <- as.data.frame(dat_subwt)
+ dat_submt <- as.data.frame(dat_submt)
+ 
+  model_wt <- lm(dag_mean ~ deltaC_mean_mean, data = dat_subwt)
+  model_mt <- lm(dag_mean ~ deltaC_mean_mean , data = dat_submt)
+
+  summary(model_wt)
+  summary(model_mt)
+  
+  combined_model<- lm(dag_mean ~ deltaC_mean_mean * id, data = rbind(dat_subwt, dat_submt))
+  interaction_test <- summary(combined_model)
+
+  anova_test <- anova(combined_model)
+  anova_test
+
+  get_slope <- function(data) {
+  model <- lm(dag_mean ~ deltaC_mean_mean, data = data)
+  return(coef(model)[2])  # Extract the coefficient of deltaC_mean_mean (slope)
+}
+
+# Perform bootstrap resampling for each group
+set.seed(123)  # For reproducibility
+n_bootstraps <- 100  # Number of bootstrap samples
+slopes_group1 <- replicate(n_bootstraps, get_slope(dat_subwt[sample(x=seq(1, nrow(dat_subwt)), size =50, replace = TRUE),]))
+slopes_group2 <- replicate(n_bootstraps, get_slope(dat_submt[sample(x=seq(1, nrow(dat_submt)), size =50, replace = TRUE),]))
+
+# Calculate the difference in slopes
+slope_diff <- slopes_group1 - slopes_group2
+
+obs <- 10.44-4.5
+hist(slope_diff) + abline(v=obs, col="red")
+  
+  # Calculate coefficients of variation
+cv_wt <- sd(dat_subwt$dag_mean) / mean(dat_subwt$dag_mean)
+cv_mt <- sd(dat_submt$dag_mean) / mean(dat_submt$dag_mean)
+
+# Perform t-test
+t_test_result <- t.test(cv_wt, cv_mt)
+  
+
+
+ cor.test(dat_subwt$dag_mean, dat_subwt$deltaC_mean_mean)
+ cor.test(dat_subwt$dag_mean, dat_subwt$adj_dc13)
+ 
+ 
+ cor.test(dat_submt$dag_mean, dat_submt$adj_dc13)
+
+ dat3 <- dat %>% filter(line!="COL")
+ 
+ dat3$group <- factor(dat3$group , levels = c("mut", "wt"))
+wue_hist <- ggplot(dat3, aes(x = deltaC_mean_mean, y=label, fill=label, alpha=0.8)) +
+   geom_violin(trim = F, width = 0.5, adjust = 3) +  # Adjusting parameters for smoother violins
+   geom_jitter(width = 0.2, alpha = 0.6)+
+   scale_fill_manual(values = c("wt"= "#4E9D79", "mut" = "#CE6E2D")) +
+   scale_color_manual(values = c("wt"= "#4E9D79", "mut" = "#CE6E2D")) 
+ wue_hist
+ 
+  pdf(file="./figs/Uli-exp-dc13_hist_plot.pdf", height = 2, width = 4.5)
+ wue_hist
+ dev.off()
+ 
+  dat3$label <- factor(dat3$label, levels = c("wt", "mut"))
+ft_hist <- ggplot(dat3, aes(y = dag_mean, x=label, fill=label, alpha=0.8)) +
+   geom_violin(trim = F, width = 1.5, adjust = 3) +  # Adjusting parameters for smoother violins
+   geom_jitter(width = 0.2, alpha = 0.6) +
+   scale_fill_manual(values = c("wt"= "#4E9D79", "mut" = "#CE6E2D")) +
+   scale_color_manual(values = c("wt"= "#4E9D79", "mut" = "#CE6E2D")) 
+ ft_hist
+  
+  pdf(file="./figs/Uli-exp-ft_hist_plot.pdf", height = 4.5, width = 3)
+ ft_hist
+ dev.off()
+ 
+ 
+ 
+ 
+ ## load imputed mutant dC13 data
+ imp_dC13 <- readRDS(file="./data/imputed_mutant_dC13.rda")
+ dim(imp_dC13)
+
+ 
+  
+
+  
+  
+```
+
+#### KO delta_C13 data
+
+```{r, echo=F, eval=T, message=F, warning=F, fig.width=8, fig.height=8, fig.cap="Delta_C13 correlations across mutants and wt from Uli, and raw and imputed Dittberner data."}
+RERUN=F
+if(RERUN){
+
+  flc_droughtexp_data <- readRDS(file="./data/flc_droughtexp_data.rda")
+  dim(flc_droughtexp_data)
+  hist(flc_droughtexp_data$days_to_flowering)
+
+  ## Load Uli's data
+  #flcKo_dC13 <-  read.table(file="./data/deltaC_extended_rep3.csv", sep=",", header=T)
+  flcKo_dC13 <-  read.table(file="./Data_code_Ruffley_Lutz_et_al/deltaC_extended_group_rep3.csv", sep=",", header=T)
+  head(flcKo_dC13)
+  dim(flcKo_dC13)
+  
+  extract_numbers <- function(text) {
+  # Extract numbers using regular expression
+  numbers <- regmatches(text, regexpr("ID(\\d{4})-", text))
+  # Convert to numeric and return
+  as.numeric(sub("ID", "", sub("-", "", numbers)))
+}
+  flcKo_dC13_mut$accession <- c(extract_numbers(flcKo_dC13_mut$line), 7706)
+
+
+  flcKo_dC13_col <- flcKo_dC13 %>% filter(label=="COL")
+
+  flcKo_dC13_mut <- flcKo_dC13 %>% filter(label=="mut")
+  
+  flcKo_dC13_mut$accession <- strsplit(flcKo_dC13_mut$line, split = "-")
+  
+  mean_dC13_ko <- c()
+  k<-4807
+  for (k in unique(flcKo_dC13_mut$accession)){
+    tmp <- flcKo_dC13_mut[flcKo_dC13_mut$accession==k, ]
+    #print(mean(tmp$deltaC_mean_mean, na.rm=T))
+    mean_dC13_ko <- c(mean_dC13_ko, mean(tmp$deltaC_mean_mean, na.rm=T))
+  }
+  dC13_mut <- data.frame(id = unique(flcKo_dC13_mut$accession),
+                         mean_dC13_ko)
+  dC13_mut$id <- gsub("ID", "", dC13_mut$id)
+  dC13_mut$id[29] <- 7701  ## i THINK this one is 7701, but need to double check
+
+  dC13_mut
+
+
+  flcKo_dC13_wt <-flcKo_dC13 %>% filter(type=="WT")
+  mean_dC13_wt <- c()
+  for (k in unique(flcKo_dC13_wt$accession)){
+    tmp <- flcKo_dC13_wt[flcKo_dC13_wt$accession==k, ]
+    mean_dC13_wt <- c(mean_dC13_wt, mean(tmp$deltaC_mean))
+  }
+  dC13_wt <- data.frame(id = unique(flcKo_dC13_wt$accession),
+                         mean_dC13_wt)
+  dC13_wt$id <- gsub("ID", "", dC13_wt$id)
+  dC13_wt
+
+  ## how do Uli's ko and wt correlate?
+  uli_dC13 <- merge(dC13_mut, dC13_wt, by="id")
+  Uli_dC13_corplot <- ggplot(uli_dC13) + geom_point(aes(x=mean_dC13_wt, y=mean_dC13_ko)) +
+    xlab("dC13 WT") + ylab("dC13 mut") +
+    geom_smooth(method="lm", aes(x=mean_dC13_wt, y=mean_dC13_ko), col="black")+
+    geom_text(x=-30.4, y=-30, label="r2 = 0.77, p < 0.0002")
+  Uli_dC13_corplot
+  cor.test(uli_dC13$mean_dC13_ko, uli_dC13$mean_dC13_wt)
+
+  ## how do Uli mutants correlate with raw dittberner?
+  dittb_dC13_raw <- read.table(file="./data/atlas1001_phenotypes_matrix_MR.csv",
+                           header = T, sep=",")
+  dittb_dC13_raw <- dittb_dC13_raw %>% select(id, Delta_13C)
+  head(dittb_dC13_raw)
+  dittb_dC13_raw %>%  filter(id==6909)
+
+  dittb_raw_Uli_mut <- merge(dittb_dC13_raw, dC13_mut, by="id")
+  ditRaw_Uli_dC13_mut_corplot <- ggplot(dittb_raw_Uli_mut) +
+    geom_point(aes(x=Delta_13C, y=mean_dC13_ko)) +
+    xlab("dC13 Dittberner raw") + ylab("dC13 flc mut") +
+    geom_smooth(method="lm", aes(x=Delta_13C, y=mean_dC13_ko), col="black")+
+    geom_text(x=-35, y=-29.5, label="r2 = 0.89, p < 0.007")
+  ditRaw_Uli_dC13_mut_corplot
+  cor.test(dittb_raw_Uli_mut$Delta_13C, dittb_raw_Uli_mut$mean_dC13_ko)
+
+  ## how do Uli wt correlate with raw dittberner?
+  dittb_raw_Uli_wt <- merge(dittb_dC13_raw, dC13_wt, by="id")
+  ditRaw_Uli_dC13_wt_corplot <- ggplot(dittb_raw_Uli_wt) +
+    geom_point(aes(x=Delta_13C, y=mean_dC13_wt)) +
+    xlab("dC13 Dittberner raw") + ylab("dC13 WT") +
+    geom_smooth(method="lm", aes(x=Delta_13C, y=mean_dC13_wt), col="black")+
+    geom_text(x=-34, y=-29, label="r2 = 0.69, p < 0.2")
+  ditRaw_Uli_dC13_wt_corplot
+  cor.test(dittb_raw_Uli_wt$Delta_13C, dittb_raw_Uli_wt$mean_dC13_wt)
+
+
+  ## how do Uli mutants correlate with imputed data
+  dittb_dC13_imp <- read.table(file="./data/atlas1001_phenotype_matrix_imputed_withID.csv",
+                           header = T, sep=",")
+  head(dittb_dC13_imp)
+  dittb_dC13_imp <- dittb_dC13_imp %>% select(id, Delta_13C)
+  dittb_imp_Uli_mut <- merge(dittb_dC13_imp, dC13_mut, by="id")
+
+  dittb_imp_Uli_mut_corplot <- ggplot(dittb_imp_Uli_mut) +
+    geom_point(aes(x=Delta_13C, y=mean_dC13_ko)) +
+    xlab("dC13 Dittberner imputed") + ylab("dC13 flc mutant") +
+    geom_smooth(method="lm", aes(x=Delta_13C, y=mean_dC13_ko), col="black")+
+    geom_text(x=-35, y=-29.5, label="r2 = 0.71, p < 1.5e-5")
+  dittb_imp_Uli_mut_corplot
+  cor.test(dittb_imp_Uli_mut$Delta_13C, dittb_imp_Uli_mut$mean_dC13_ko)
+
+  
+  plot_grid(ditRaw_Uli_dC13_mut_corplot, dittb_imp_Uli_mut_corplot)
+  
+  dC13_corplots <- plot_grid(Uli_dC13_corplot, ditRaw_Uli_dC13_mut_corplot,
+                             ditRaw_Uli_dC13_wt_corplot, dittb_imp_Uli_mut_corplot,
+                             nrow=2, ncol=2)
+  saveRDS(dC13_corplots, file="./figs/tmpobjects/mut_wt_dC13_corplots.rda")
+dC13_corplots_1 <- readRDS(file="./figs/tmpobjects/mut_wt_dC13_corplots.rda")
+
+  dim(dittb_dC13_raw)
+  dittb_dC13_raw <- na.omit(dittb_dC13_raw)
+
+  dittb_raw_Uli_mut <- merge(dittb_dC13_raw, dC13_mut, by="id", all.x=T, all.y=T)
+
+  dittb_raw_Uli_mut <- merge(dittb_raw_Uli_mut, flc_droughtexp_data, by="id",all.x=T, all.y=T)
+  head(dittb_raw_Uli_mut)
+  dim(dittb_raw_Uli_mut)
+  dittb_raw_Uli_mut<-dittb_raw_Uli_mut[,-7]
+
+  ## Impute missing mutant dC13 data using raw dittberner data and mutant ft and days to wilting
+  require(missForest)
+  ## with seed weight
+  dimp_withSeed <- missForest(dittb_raw_Uli_mut[,-1], variablewise=T)
+  id <- dittb_raw_Uli_mut[,1]
+  imp_dC13_withSeeds <- cbind(id, dimp_withSeed$ximp)
+
+  ## without seed weight
+  dimp_woSeed <- missForest(dittb_raw_Uli_mut[,-c(1,6)], variablewise=T)
+  id <- dittb_raw_Uli_mut[,1]
+  imp_dC13 <- cbind(id, dimp_woSeed$ximp)
+
+  cor.test(imp_dC13$Delta_13C.x, imp_dC13$mean_dC13_ko)
+  ## correlation is 0.93, p<2.2-16
+  imputed_dC13_plot<- ggplot(imp_dC13) + geom_point(aes(x=Delta_13C.x, y=mean_dC13_ko)) +
+    ylab("dC13 mut imputed") + xlab("dC13 dittberner") +
+    geom_smooth(method="lm", aes(x=Delta_13C.x, y=mean_dC13_ko), col="black") +
+    geom_text(x=-35.8, y=-29.5, label="r2 = 0.87, p < 2.2-16")
+
+  saveRDS(imp_dC13_withSeeds, file="./data/imputed_mutant_dC13_withSeeds.rda")
+  saveRDS(imp_dC13, file="./data/imputed_mutant_dC13.rda")
+
+  dC13_corplots <- plot_grid(Uli_dC13_corplot, ditRaw_Uli_dC13_mut_corplot,
+                             ditRaw_Uli_dC13_wt_corplot, dittb_imp_Uli_mut_corplot,
+                             imputed_dC13_plot, nrow=3, ncol=2)
+  saveRDS(dC13_corplots, file="./figs/tmpobjects/mut_wt_dC13_corplots.rda")
+
+
+}else{
+  dC13_corplots <- readRDS(file="./figs/tmpobjects/mut_wt_dC13_corplots.rda")
+  dC13_corplots
+  library(ggplot2)
+library(scales)
+  
+}
+
+```
+
+#### GWA with knock-out dC13 data
+
+```{r, echo=F, eval=T, message=F, warning=F, fig.width=8, fig.height=8, fig.cap="Delta_C13 correlations across mutants and wt from Uli, and raw and imputed Dittberner data."}
+RERUN=F
+if(RERUN){
+  imp_dC13 <- readRDS(file="./data/imputed_mutant_dC13.rda")
+  head(imp_dC13)
+  dim(imp_dC13)
+
+  ###imp_dC13_withSeeds <- readRDS( file="./data/imputed_mutant_dC13_withSeeds.rda")
+
+  ## load lines used in drought exp. to filter to them only
+  flc_droughtexp_data <- readRDS(file="./data/flc_droughtexp_data.rda")
+  head(flc_droughtexp_data)
+
+  imp_dC13 <- merge(flc_droughtexp_data, by.x="id", imp_dC13, by.y="id")
+  imp_dC13 <- imp_dC13[,c(1,4, 7,8)]
+  head(imp_dC13)
+
+  fam <- read.table(file="./phenotypes/Meaux_Dittberner_MolEcol_2018_PID_30118161/1001/Delta_13C/1001gbi.fam")
+  head(fam)
+  new_fam <- merge(fam, by.x="V1", imp_dC13, by.y="id", all.x=T)
+  head(new_fam)
+
+  new_fam <- new_fam[,c(1,2,3,4,5,7,8,9)]
+  new_fam$rSeedWeight[is.na(new_fam$rSeedWeight)] <- -9
+  new_fam$mean_dC13_ko[is.na(new_fam$mean_dC13_ko)] <- -9
+  new_fam$days_to_flowering.y[is.na(new_fam$days_to_flowering.y)] <- -9
+  head(new_fam)
+  write.table(new_fam, file="./FLC_koData/1001gbi.fam", quote = F, col.names = F, row.names = F)
+
+  #system(paste('ln -f ../1001g/1001gbi.bim ', paste0('./FLC_koData/','1001gbi.bim')))
+  #system(paste('ln -f ../1001g/1001gbi.bed ', paste0('./FLC_koData/', '1001gbi.bed')))
+  #system(paste('ln -f ../1001g/1001gbi.sXX.txt ', paste0('./FLC_koData/','1001gbi.sXX.txt')))
+
+  ## change output file and -n to change phenotype - either mutatnt dC13 or mutant seed weights
+  setwd("~/safedata/natvar/")
+  write.table(quote=F,row.names=F,col.names=F,
+                   file="./FLC_koData/rungwa.sh",
+                   x=rbind(
+                     "#!/bin/bash",
+                     "#SBATCH --cpus-per-task=2",
+                     "#SBATCH --mem-per-cpu=4G",
+                     "#SBATCH --partition=DPB",
+                     "#SBATCH --job-name=rSeedWeight",
+                     "#SBATCH --output=rSeedWeight.slurm.log",
+                     "./gemma -bfile 1001gbi -miss 0.1 -maf 0.05 -r2 1 -k 1001gbi.sXX.txt -lmm 4 -n 1 -o rSeedWeight")
+                   )
+  setwd("./FLC_koData/")
+  system("sbatch rungwa.sh")
+
+  ### also run gwa using imputed Seeds weights to get estimates of selection on alleles, just change some of the code above a little
+
+  ##########################################################
+  ### GWAS results plotting
+  ##########################################################
+  library(devtools)
+  install_github("drveera/ggman")
+  library(ggman)
+  setwd("~/safedata/natvar/")
+  tmp1<-data.table::fread(file="./FLC_koData/output/mutdC13_ft.assoc.txt") %>% select(chr,ps, rs, af, beta_1, beta_2, p_score)
+  #tmp1<-data.table::fread(file="./FLC_koData/output/mutdC13_ft.assoc.txt") %>% select(chr,ps, rs, af, beta_1, beta_2, p_score)
+  head(tmp1)
+
+  ### plot the alleles by the color of selection
+
+  ## SEED WEIGHT
+  seedWeight <- data.table::fread(file="./FLC_koData/output/rSeedWeight.assoc.txt") %>% select(chr,ps, rs,af, beta, se, p_score)
+  head(seedWeight)
+
+  tmp1_seedWeight <- merge(tmp1, seedWeight, by="rs")
+  head(tmp1_seedWeight)
+  tmp1_seedWeight$col_fit <- rep(1, nrow(tmp1_seedWeight))
+  tmp1_seedWeight$col_fit[tmp1_seedWeight$beta <= 0] <- 0
+
+  thresh <- -log10(0.05/nrow(tmp1_seedWeight))
+  # nrow(tmp1_seedWeight)- 820884
+  # #thresh <- -log10(0.05/11379)
+  # thresh <- -log10(0.05/15510)
+
+  dim(tmp1_seedWeight)
+  summary(tmp1_seedWeight$se)
+  #tmp1_seedWeight <- tmp1_seedWeight %>% filter(se < 0.003)
+  tmp1_seedWeight$chr_col <- rep(2, nrow(tmp1_seedWeight))
+  tmp1_seedWeight$chr_col[tmp1_seedWeight$chr.x==2|tmp1_seedWeight$chr.x==4] <- 3
+  tmp1_seedWeight$chr_col[-log10(tmp1_seedWeight$p_score.x)>5.8] <-    tmp1_seedWeight$col_fit[-log10(tmp1_seedWeight$p_score.x)>5.8]
+
+  head(tmp1_seedWeight)
+ tmp2 <- tmp1_seedWeight[tmp1_seedWeight$col_fit==0,] %>% filter(chr.x==1)
+  head(tmp2)
+  tmp1_seedWeight$log <- -log10(tmp1_seedWeight$p_score.x)
+  tmp1_seedWeight$log2 <- -log10(tmp1_seedWeight$p_score.y)
+  tmp1_seedWeight %>% filter(tmp1_seedWeight$log> 6)
+  
+  
+  ## colored plots, how to change colors??
+  dC13mut_ft_SeedWeight_GWAplot <- ggman(tmp1_seedWeight, snp = "rs", bp = "ps.x", chrom = "chr.x", pvalue = "p_score.x", relative.positions = T, sigLine = thresh, title="") +
+    geom_point(aes(color=as.factor(chr_col))) + ylim(2, 8) +
+     #scale_color_manual(values=c("1"="#78c679", "0" = "#bd0026")) +
+     scale_color_manual(values=c("1"="#78c679", "0" = "#bd0026", "2"="#636363", "3"="#bdbdbd"))
+  dC13mut_ft_SeedWeight_GWAplot
+
+  pdf(file="./figs/dC13mut_ft_SeedWeight_GWAplot.pdf", width=9, height=3)
+  dC13mut_ft_SeedWeight_GWAplot
+  dev.off()
+
+
+   ## points only plot
+   dC13mut_ft_SeedWeight_GWAplot_onlypoints <- ggman(tmp1_seedWeight, snp = "rs", bp = "ps.x", chrom = "chr.x", pvalue = "p_score.x", relative.positions = T, sigLine = thresh, title="") +
+    geom_point(aes(color=as.factor(chr_col), size=as.factor(chr_col))) + ylim(2, 8) +
+     #scale_color_manual(values=c("1"="#78c679", "0" = "#bd0026")) +
+     scale_color_manual(values=c("1"="#78c679", "0" = "#bd0026", "2"="#636363", "3"="#bdbdbd")) +
+        scale_size_manual(values=c("1"=2, "0" = 2, "2"=0.75, "3"=0.75))+
+       theme(legend.position = "none",
+        panel.grid = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.background = element_blank()) +
+      theme_void() +
+      theme(legend.position = "none")
+   dC13mut_ft_SeedWeight_GWAplot_onlypoints
+
+  png(file="./figs/dC13mut_ft_SeedWeight_GWAplot_onlypoints.png", units="in",res=2400, width = 9, height = 3, bg="transparent")
+  dC13mut_ft_SeedWeight_GWAplot_onlypoints
+  dev.off()
+
+
+  #saveRDS(dC13mut_SeedWeight_GWAplot, file="./figs/tmpobjects/dC13mut_SeedWeight_GWAplot.rda")
+
+  saveRDS(dC13mut_ft_SeedWeight_GWAplot, file="./figs/tmpobjects/dC13mut_ft_SeedWeight_GWAplot.rda")
+
+  pdf(file="./figs/dC13mut_ft_SeedWeight_GWAplot.pdf", width=9, height=3)
+  dC13mut_ft_SeedWeight_GWAplot
+  dev.off()
+
+  getwd()
+  png(file="./figs/dC13mut_ft_SeedWeight_GWAplot_thinned.png", units="in",res=72, width = 12, height = 6, bg="transparent")
+  dC13mut_ft_SeedWeight_GWAplot
+  dev.off()
+
+  pdf(file="./figs/dC13mut_ft_SeedWeight_GWAplot.rda.pdf")
+  dC13mut_ft_SeedWeight_GWAplot
+  dev.off()
+
+  getwd()
+  png(file="./figs/dC13mut_ft_SeedWeight_GWAplot.rda.png", units="in",res=72, width = 12, height = 6, bg="transparent")
+  dC13mut_ft_SeedWeight_GWAplot
+  dev.off()
+
+
+
+}else{
+ dC13mut_SeedWeight_GWAplot <- readRDS(file="./figs/tmpobjects/dC13mut_SeedWeight_GWAplot.rda")
+  dC13mut_SeedWeight_GWAplot
+}
+```
